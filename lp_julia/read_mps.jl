@@ -1,9 +1,7 @@
 module MPSReader
 
-using SparseArrays
-
 include("lp_problem.jl")
-using .lpProblem: LPProblem
+using .lpProblem
 
 export read_mps_from_string, read_mps_from_file
 
@@ -132,7 +130,3 @@ function read_mps_from_file(file_path::String)
 end
 
 end # module
-
-
-
-

@@ -1,6 +1,5 @@
 using Test
 
-# Include the modules with the correct paths
 include("../lp_julia/read_mps.jl")
 using .MPSReader
 
@@ -27,5 +26,3 @@ using .lpProblem
     # @test lp.vars == ["x1", "x2", ...]  # Replace with expected variable names
     # @test lp.constraint_types == ['=', '≤', ...]  # Replace with expected constraint types
 end
-
-
