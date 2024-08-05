@@ -1,98 +1,125 @@
 module lpPresolve
 
-using SparseArrays
-
-# Define the LPProblem type
-struct LPProblem
-    is_minimize::Bool
-    c::Vector{Float64}
-    A::SparseMatrixCSC{Float64, Int}
-    b::Vector{Float64}
-    vars::Vector{String}
-    constraint_types::Vector{Char}
-end
-
 # Define the presolve function
-function presolve(lp::LPProblem; eps::Float64=1e-8, verbose::Bool=false)
-    is_minimize, c, A, b = lp.is_minimize, lp.c, sparse(lp.A), lp.b
-    vars, constraint_types = lp.vars, lp.constraint_types
-    m, n = size(A)
+function read_mps_from_string(mps_string::String)
+    lines = split(mps_string, '\n')
+    sections = Dict("NAME" => "", "ROWS" => [], "COLUMNS" => Dict(), "RHS" => Dict(), "BOUNDS" => Dict())
+    current_section = ""
+    objective_name = ""
+    is_minimize = options[OPTION_MINIMIZE_OBJECTIVE] ? true : false
 
-    # Initialize masks for rows and columns to keep
-    keep_rows = trues(m)
-    keep_cols = trues(n)
+    objective_set = false
+    for line in lines
+        words = split(line)
+        (isempty(words) || (line[1] == '*')) && continue  # Skip empty lines and comments
 
-    # Step 1: Remove zero columns
-    for j in 1:n
-        if nnz(A[:, j]) == 0 && abs(c[j]) < eps
-            keep_cols[j] = false
-        end
-    end
-
-    # Step 2: Remove zero rows
-    for i in 1:m
-        if nnz(A[i, :]) == 0
-            if abs(b[i]) < eps
-                keep_rows[i] = false
-            else
-                error("Infeasible problem: zero row with non-zero RHS")
-            end
-        end
-    end
-
-    # Step 3: Remove duplicate rows
-    for i in 1:m
-        if !keep_rows[i]
+        if (line[1] != ' ') && words[1] in ["NAME", "OBJSENSE", "ROWS", "COLUMNS", "RHS", "BOUNDS", "ENDATA"]
+            current_section = words[1]
             continue
         end
-        for j in (i+1):m
-            if !keep_rows[j]
-                continue
+
+        if current_section == "NAME"
+            sections["NAME"] = words[1]
+        elseif current_section == "OBJSENSE"
+            if words[1] == "MAX"
+                is_minimize = false
+                objective_set = true
+            elseif words[1] == "MIN"
+                is_minimize = true
+                objective_set = true
             end
-            if A[i, :] ≈ A[j, :] && abs(b[i] - b[j]) < eps && constraint_types[i] == constraint_types[j]
-                keep_rows[j] = false
-            elseif A[i, :] ≈ -A[j, :] && abs(b[i] + b[j]) < eps && 
-                   ((constraint_types[i] == '≤' && constraint_types[j] == '≥') || 
-                    (constraint_types[i] == '≥' && constraint_types[j] == '≤'))
-                keep_rows[j] = false
+        elseif current_section == "ROWS"
+            row_type, row_name = words
+            push!(sections["ROWS"], (type=row_type, name=row_name))
+            if row_type == "N"
+                objective_name = row_name
+            end
+        elseif current_section == "COLUMNS"
+            col_name, row_name, value = words
+            value = parse(Float64, value)
+            if !haskey(sections["COLUMNS"], col_name)
+                sections["COLUMNS"][col_name] = Dict()
+            end
+            sections["COLUMNS"][col_name][row_name] = value
+        elseif current_section == "RHS"
+            if length(words) == 3
+                _, row_name, value = words
+            else
+                row_name, value = words[2:3]
+            end
+            sections["RHS"][row_name] = parse(Float64, value)
+        elseif current_section == "BOUNDS"
+            bound_type, _, var_name, value = words
+            if !haskey(sections["BOUNDS"], var_name)
+                sections["BOUNDS"][var_name] = Dict()
+            end
+            sections["BOUNDS"][var_name][bound_type] = parse(Float64, value)
+        end
+    end
+
+    # Convert to LPProblem structure
+    vars = collect(keys(sections["COLUMNS"]))
+    n_vars = length(vars)
+    n_constraints = count(row -> row.type != "N", sections["ROWS"])
+
+    c = zeros(n_vars)
+    A = zeros(n_constraints, n_vars)
+    b = zeros(n_constraints)
+    constraint_types = Char[]
+
+    # Populate objective function
+    for (i, var) in enumerate(vars)
+        if haskey(sections["COLUMNS"][var], objective_name)
+            c[i] = sections["COLUMNS"][var][objective_name]
+        end
+    end
+
+    # Populate constraint matrix and right-hand side
+    constraint_index = 0
+    for row in sections["ROWS"]
+        if row.type != "N"
+            constraint_index += 1
+            push!(constraint_types, row.type[1])  # Store constraint type
+            for (i, var) in enumerate(vars)
+                if haskey(sections["COLUMNS"][var], row.name)
+                    A[constraint_index, i] = sections["COLUMNS"][var][row.name]
+                end
+            end
+            b[constraint_index] = get(sections["RHS"], row.name, 0.0)
+            
+            # Adjust for 'G' type constraints
+            if row.type == "G"
+                A[constraint_index, :] *= -1
+                b[constraint_index] *= -1
             end
         end
     end
 
-    # Step 4: Fix variables and tighten bounds
-    fixed_vars = Dict{String, Float64}()
-    for j in 1:n
-        col = A[:, j]
-        if nnz(col) == 1
-            i = findfirst(!iszero, col)
-            if abs(col[i]) ≈ 1 && constraint_types[i] == '='
-                val = b[i] / col[i]
-                fixed_vars[vars[j]] = val
-                keep_cols[j] = false
-                b .-= val * col
+    # Process bound constraints
+    lb = fill(-Inf, n_vars)
+    ub = fill(Inf, n_vars)
+    for (i, var) in enumerate(vars)
+        if haskey(sections["BOUNDS"], var)
+            bounds = sections["BOUNDS"][var]
+            if haskey(bounds, "LO")
+                lb[i] = bounds["LO"]
             end
+            if haskey(bounds, "UP")
+                ub[i] = bounds["UP"]
+            end
+            if haskey(bounds, "FX")
+                lb[i] = ub[i] = bounds["FX"]
+            end
+        else
+            lb[i] = 0.0  # Default lower bound is 0 if not specified
         end
     end
 
-    # Apply the reductions
-    A_new = A[keep_rows, keep_cols]
-    b_new = b[keep_rows]
-    c_new = c[keep_cols]
-    vars_new = vars[keep_cols]
-    constraint_types_new = constraint_types[keep_rows]
-
-    # Adjust the objective for fixed variables
-    obj_adjust = isempty(fixed_vars) ? 0.0 : sum(c[j] * fixed_vars[vars[j]] for j in 1:n if haskey(fixed_vars, vars[j]))
-
-    if verbose
-        println("\nPresolve summary:")
-        println("  Original problem size: $(m) x $(n)")
-        println("  Reduced problem size: $(sum(keep_rows)) x $(sum(keep_cols))")
-        println("  Number of fixed variables: $(length(fixed_vars))")
-        println("  Objective adjustment: $obj_adjust")
+    if options[OPTION_VERBOSE] && objective_set
+        println("\nWARNING: Objective function is set to $(is_minimize ? OPTION_MINIMIZE_OBJECTIVE : OPTION_MAXIMIZE_OBJECTIVE) in the MPS file overriding any command line option\n")
     end
 
-    return LPProblem(is_minimize, c_new, A_new, b_new, vars_new, constraint_types_new), fixed_vars, obj_adjust
+    return LPProblem(is_minimize, c, A, b, lb, ub, vars, constraint_types)
 end
 
 end # module
