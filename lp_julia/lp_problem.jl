@@ -1,5 +1,8 @@
 module lpProblem
 
+# Export the LPProblem struct
+export LPProblem
+
 # Define a struct to represent a Linear Programming problem
 struct LPProblem
     is_minimize::Bool  # True if the objective is to minimize
@@ -12,7 +15,5 @@ struct LPProblem
     constraint_types::Vector{Char}  # Constraint types
 end
 
-# Export the LPProblem struct
-export LPProblem
-
 end # module
+

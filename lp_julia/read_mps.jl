@@ -1,15 +1,11 @@
 module MPSReader
 
-export read_mps_from_string, read_mps_from_file, LPProblem
+using SparseArrays
 
-struct LPProblem
-    is_minimize::Bool
-    c::Vector{Float64}
-    A::Matrix{Float64}
-    b::Vector{Float64}
-    vars::Vector{String}
-    constraint_types::Vector{Char}
-end
+include("lp_problem.jl")
+using .lpProblem: LPProblem
+
+export read_mps_from_string, read_mps_from_file
 
 function read_mps_from_string(mps_string::String)
     lines = split(mps_string, '\n')
@@ -18,6 +14,7 @@ function read_mps_from_string(mps_string::String)
     objective_name = ""
     is_minimize = true
 
+    objective_set = false
     for line in lines
         words = split(line)
         (isempty(words) || (line[1] == '*')) && continue  # Skip empty lines and comments
@@ -32,6 +29,10 @@ function read_mps_from_string(mps_string::String)
         elseif current_section == "OBJSENSE"
             if words[1] == "MAX"
                 is_minimize = false
+                objective_set = true
+            elseif words[1] == "MIN"
+                is_minimize = true
+                objective_set = true
             end
         elseif current_section == "ROWS"
             row_type, row_name = words
@@ -120,41 +121,18 @@ function read_mps_from_string(mps_string::String)
         end
     end
 
-    # Add bound constraints to A and b
-    n_bound_constraints = count(x -> x > -Inf, lb) + count(x -> x < Inf, ub)
-    A_with_bounds = zeros(n_constraints + n_bound_constraints, n_vars)
-    b_with_bounds = zeros(n_constraints + n_bound_constraints)
-    
-    A_with_bounds[1:n_constraints, :] = A
-    b_with_bounds[1:n_constraints] = b
-    
-    bound_constraint_index = n_constraints
-    for i in 1:n_vars
-        if lb[i] > -Inf
-            bound_constraint_index += 1
-            A_with_bounds[bound_constraint_index, i] = 1
-            b_with_bounds[bound_constraint_index] = lb[i]
-            push!(constraint_types, 'G')
-        end
-        if ub[i] < Inf
-            bound_constraint_index += 1
-            A_with_bounds[bound_constraint_index, i] = 1
-            b_with_bounds[bound_constraint_index] = ub[i]
-            push!(constraint_types, 'L')
-        end
-    end
-
-    return LPProblem(is_minimize, c, A_with_bounds, b_with_bounds, vars, constraint_types)
+    return LPProblem(is_minimize, c, A, b, lb, ub, vars, constraint_types)
 end
 
 function read_mps_from_file(file_path::String)
-    file_content = open(file_path, "r") do file
-        read(file, String)
+    mps_string = open(file_path, "r") do f
+        read(f, String)
     end
-    return read_mps_from_string(file_content)
+    return read_mps_from_string(mps_string)
 end
 
-end # module MPSReader
+end # module
+
 
 
 
