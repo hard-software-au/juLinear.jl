@@ -52,11 +52,23 @@ function read_mps_from_string(mps_string::String)
             end
             sections["RHS"][row_name] = parse(Float64, value)
         elseif current_section == "BOUNDS"
-            bound_type, _, var_name, value = words
+            if length(words) == 4  # LO, UP  and FX
+                bound_type, _, var_name, value = words
+            elseif length(words) == 3  # FR
+                bound_type, _, var_name = words
+                value = Inf
+            end
+            println("bound_type: ", bound_type)
+            println("var_name: ", var_name)
+            println("value: ", value)
             if !haskey(sections["BOUNDS"], var_name)
                 sections["BOUNDS"][var_name] = Dict()
             end
-            sections["BOUNDS"][var_name][bound_type] = parse(Float64, value)
+            if bound_type == "FR"
+                sections["BOUNDS"][var_name][bound_type] = nothing
+            else
+                sections["BOUNDS"][var_name][bound_type] = parse(Float64, value)
+            end
         end
     end
 
@@ -112,6 +124,10 @@ function read_mps_from_string(mps_string::String)
             end
             if haskey(bounds, "FX")
                 lb[i] = ub[i] = bounds["FX"]
+            end
+            if haskey(bounds, "FR")
+                lb[i] = -Inf
+                ub[i] = Inf
             end
         else
             lb[i] = 0.0  # Default lower bound is 0 if not specified
