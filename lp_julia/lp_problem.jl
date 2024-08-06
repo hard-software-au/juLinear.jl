@@ -1,8 +1,4 @@
-module lpProblem
-
-using LinearAlgebra
-using SparseArrays
-using Random
+module lp_problem
 
 # Export the LPProblem struct
 export LPProblem

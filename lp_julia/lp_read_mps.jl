@@ -1,7 +1,6 @@
-module MPSReader
+module lp_read_mps
 
-include("lp_problem.jl")
-using .lpProblem
+using lp_problem
 
 export read_mps_from_string, read_mps_from_file
 
