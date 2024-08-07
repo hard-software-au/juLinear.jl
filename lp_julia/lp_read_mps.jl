@@ -1,12 +1,15 @@
 module lp_read_mps
 
+using SparseArrays
+using DataStructures
+
 using lp_problem
 
 export read_mps_from_string, read_mps_from_file
 
 function read_mps_from_string(mps_string::String)
     lines = split(mps_string, '\n')
-    sections = Dict("NAME" => "", "ROWS" => [], "COLUMNS" => Dict(), "RHS" => Dict(), "BOUNDS" => Dict())
+    sections = Dict("NAME" => "", "ROWS" => [], "COLUMNS" => OrderedDict(), "RHS" => Dict(), "BOUNDS" => Dict())
     current_section = ""
     objective_name = ""
     is_minimize = true
@@ -41,7 +44,7 @@ function read_mps_from_string(mps_string::String)
             col_name, row_name, value = words
             value = parse(Float64, value)
             if !haskey(sections["COLUMNS"], col_name)
-                sections["COLUMNS"][col_name] = Dict()
+                sections["COLUMNS"][col_name] = OrderedDict()
             end
             sections["COLUMNS"][col_name][row_name] = value
         elseif current_section == "RHS"
@@ -58,9 +61,6 @@ function read_mps_from_string(mps_string::String)
                 bound_type, _, var_name = words
                 value = Inf
             end
-            println("bound_type: ", bound_type)
-            println("var_name: ", var_name)
-            println("value: ", value)
             if !haskey(sections["BOUNDS"], var_name)
                 sections["BOUNDS"][var_name] = Dict()
             end
@@ -78,7 +78,7 @@ function read_mps_from_string(mps_string::String)
     n_constraints = count(row -> row.type != "N", sections["ROWS"])
 
     c = zeros(n_vars)
-    A = zeros(n_constraints, n_vars)
+    A = spzeros(n_constraints, n_vars)
     b = zeros(n_constraints)
     constraint_types = Char[]
 
