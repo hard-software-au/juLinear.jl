@@ -1,0 +1,92 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage[T1]{fontenc}
+\usepackage{beramono}
+\usepackage{jlcode}
+
+%%
+%% Julia definition (c) 2014 Jubobs
+%%
+% \lstdefinelanguage{Julia}%
+%   {morekeywords={abstract,break,case,catch,const,continue,do,else,elseif,%
+%       end,export,false,for,function,immutable,import,importall,if,in,%
+%       macro,module,otherwise,quote,return,switch,struct,true,try,type,typealias,%
+%       using,while},%
+%    sensitive=true,%
+%    alsoother={$},%
+%    morecomment=[l]\#,%
+%    morecomment=[n]{\#=}{=\#},%
+%    morestring=[s]{"}{"},%
+%    morestring=[m]{'}{'},%
+% }[keywords,comments,strings]%
+
+% \lstset{%
+%     language         = Julia,
+%     basicstyle       = \ttfamily,
+%     keywordstyle     = \bfseries\color{blue},
+%     stringstyle      = \color{magenta},
+%     commentstyle     = \color{ForestGreen},
+%     showstringspaces = false,
+% }
+
+\begin{document}
+
+\section*{Mathematical Formulation of the LPProblem}
+
+Given a linear programming problem, we aim to either minimize or maximize a linear objective function subject to a set of linear constraints.
+
+Let:
+\begin{itemize}
+    \item $\mathbf{c} \in \mathbb{R}^n$ be the vector of objective function coefficients.
+    \item $\mathbf{A} \in \mathbb{R}^{m \times n}$ be the constraint matrix.
+    \item $\mathbf{b} \in \mathbb{R}^m$ be the vector representing the right-hand side of the constraints.
+    \item $\mathbf{l} \in \mathbb{R}^n$ be the vector of lower bounds for the variables.
+    \item $\mathbf{u} \in \mathbb{R}^n$ be the vector of upper bounds for the variables.
+    \item $\mathbf{x} \in \mathbb{R}^n$ be the vector of decision variables.
+    \item $\text{vars} = \{x_1, x_2, \dots, x_n\}$ be the variable names.
+    \item $\text{constraint\_types} = \{c_1, c_2, \dots, c_m\}$ where $c_i \in \{\leq, \geq, =\}$ represents the type of each constraint.
+\end{itemize}
+
+The general mathematical formulation is as follows:
+
+\subsection*{Objective Function}
+\[
+\text{Minimize or Maximize:} \quad \mathbf{c}^\top \mathbf{x}
+\]
+depending on the value of \texttt{is\_minimize} (if True, minimize; if False, maximize).
+
+\subsection*{Constraints}
+\[
+\mathbf{A} \mathbf{x} \begin{cases} 
+\leq \mathbf{b}, & \text{if } c_i = \leq \\
+\geq \mathbf{b}, & \text{if } c_i = \geq \\
+= \mathbf{b}, & \text{if } c_i = = \\
+\end{cases} \quad \text{for } i = 1, 2, \dots, m
+\]
+
+\subsection*{Variable Bounds}
+\[
+\mathbf{l} \leq \mathbf{x} \leq \mathbf{u}
+\]
+
+where $\mathbf{x} = \{x_1, x_2, \dots, x_n\}$ are the decision variables, and the bounds are element-wise.
+
+
+
+\section*{Code Formulation}
+
+\begin{jllisting}
+    struct LPProblem
+        is_minimize::Bool  # True if the objective is to minimize
+        c::Vector{Float64}  # Objective function coefficients
+        A::SparseMatrixCSC{Float64, Int64}  # Constraint matrix
+        b::Vector{Float64}  # Right-hand side of constraints
+        l::Vector{Float64}  # Variable lower bounds
+        u::Vector{Float64}  # Variable upper bounds
+        vars::Vector{String}  # Variable names
+        constraint_types::Vector{Char}  # Constraint types
+    end
+\end{jllisting}
+
+\end{document}
