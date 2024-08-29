@@ -19,11 +19,11 @@ Whether you're a beginner trying to grasp the basics of linear programming or an
 
 - **LaTeX**: Contains LaTeX documents related to the project. This may include reports, documentation, or any other typesetting related files.
 
-- **benchmarks**: This directory contains benchmarking scripts and results used to measure the performance of the algorithms implemented in the project.
+- **benchmarks**: This directory contains all the mps files for benchmarking codes.
 
 - **lp_julia**: The primary directory for the Julia programming files and Jupyter notebooks related to linear programming.
 
-  - **julia_files**: Contains Julia scripts that define constants, utility functions, problem definitions, and MPS file reading utilities.
+  - **code**: Contains Julia scripts that define constants, utility functions, problem definitions, and MPS file reading utilities.
   
     - `lp_constants.jl`: Contains constants used across various modules.
     - `lp_problem.jl`: Defines the structure and methods for representing linear programming problems.
@@ -38,6 +38,7 @@ Whether you're a beginner trying to grasp the basics of linear programming or an
     - `lp_revised_simplex_notebook.ipynb`: Exploration of the revised simplex method.
     - `lp_llama_ipm.ipynb`: Implementation of an interior-point method for solving LP problems.
     - `lp_presolve_notebook.ipynb`: Notebook focused on presolve techniques in linear programming.
+    - `lp_simplex_tableau.ipynb`: First exploration of tableau.
   
 - **test**: Contains test scripts to validate the functionality of various modules in the repository.
 
@@ -48,5 +49,5 @@ Whether you're a beginner trying to grasp the basics of linear programming or an
 To add a new Julia module, place your `.jl` file in the `julia_files` directory and update the `LOAD_PATH` in your scripts or notebooks to include the new module. Example:
 
 ```julia
-push!(LOAD_PATH, realpath("../julia_files"))
+push!(LOAD_PATH, realpath("../code"))
 using new_module_name
