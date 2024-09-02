@@ -1,0 +1,31 @@
+Model status
+Optimal
+
+# Primal solution values
+Feasible
+Objective 10
+# Columns 2
+x1 2
+x2 2
+# Rows 3
+C1 4
+C2 2
+C3 2
+
+# Dual solution values
+Feasible
+# Columns 2
+x1 0
+x2 0
+# Rows 3
+C1 2
+C2 1
+C3 0
+
+# Basis
+HiGHS v1
+Valid
+# Columns 2
+1 1 
+# Rows 3
+2 2 1 
