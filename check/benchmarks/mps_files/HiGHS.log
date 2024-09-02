@@ -1,0 +1,165 @@
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+LP   problem has 2 rows; 2 cols; 4 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 5e+00]
+  Cost   [1e+00, 1e+00]
+  Bound  [0e+00, 0e+00]
+  RHS    [2e+00, 6e+00]
+Presolving model
+2 rows, 2 cols, 4 nonzeros  0s
+0 rows, 0 cols, 0 nonzeros  0s
+Presolve : Reductions: rows 0(-2); columns 0(-2); elements 0(-4) - Reduced to empty
+Solving the original LP from the solution after postsolve
+Model   status      : Optimal
+Objective value     :  3.0000000000e+00
+HiGHS run time      :          0.00
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+LP   problem has 2 rows; 2 cols; 4 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 5e+00]
+  Cost   [1e+00, 1e+00]
+  Bound  [0e+00, 0e+00]
+  RHS    [2e+00, 6e+00]
+Presolving model
+2 rows, 2 cols, 4 nonzeros  0s
+0 rows, 0 cols, 0 nonzeros  0s
+Presolve : Reductions: rows 0(-2); columns 0(-2); elements 0(-4) - Reduced to empty
+Solving the original LP from the solution after postsolve
+Model   status      : Optimal
+Objective value     :  3.0000000000e+00
+HiGHS run time      :          0.00
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+WARNING: Row name "'INTORG'" in COLUMNS section is not defined: ignored
+WARNING: Row name "'INTEND'" in COLUMNS section is not defined: ignored
+WARNING: Variables 2 and 4 have the same name "MARKER"
+LP   MIP-test has 2 rows; 5 cols; 3 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 2e+00]
+  Cost   [1e+00, 1e+00]
+  Bound  [1e+00, 2e+01]
+  RHS    [5e+00, 1e+01]
+Presolving model
+Problem status detected on presolve: Infeasible
+Model   status      : Infeasible
+Objective value     :  0.0000000000e+00
+HiGHS run time      :          0.00
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+LP   problem has 2 rows; 2 cols; 4 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 5e+00]
+  Cost   [1e+00, 1e+00]
+  Bound  [0e+00, 0e+00]
+  RHS    [2e+00, 6e+00]
+Presolving model
+2 rows, 2 cols, 4 nonzeros  0s
+0 rows, 0 cols, 0 nonzeros  0s
+Presolve : Reductions: rows 0(-2); columns 0(-2); elements 0(-4) - Reduced to empty
+Solving the original LP from the solution after postsolve
+Model   status      : Optimal
+Objective value     :  3.0000000000e+00
+HiGHS run time      :          0.00
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+LP   test has 5 rows; 6 cols; 23 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 9e+00]
+  Cost   [1e+02, 2e+02]
+  Bound  [0e+00, 0e+00]
+  RHS    [2e+02, 2e+02]
+Presolving model
+5 rows, 6 cols, 23 nonzeros  0s
+4 rows, 5 cols, 15 nonzeros  0s
+4 rows, 5 cols, 15 nonzeros  0s
+Presolve : Reductions: rows 4(-1); columns 5(-1); elements 15(-8)
+Solving the presolved LP
+Using EKK dual simplex solver - serial
+  Iteration        Objective     Infeasibilities num(sum)
+          0    -1.2749287565e+02 Ph1: 4(12.2); Du: 5(127.493) 0s
+          7    -1.7592592593e+04 Pr: 0(0) 0s
+Solving the original LP from the solution after postsolve
+Model   status      : Optimal
+Simplex   iterations: 7
+Objective value     :  1.7592592593e+04
+HiGHS run time      :          0.00
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+LP   test has 5 rows; 6 cols; 23 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 9e+00]
+  Cost   [1e+02, 2e+02]
+  Bound  [0e+00, 0e+00]
+  RHS    [2e+02, 2e+02]
+Presolving model
+5 rows, 6 cols, 23 nonzeros  0s
+4 rows, 5 cols, 15 nonzeros  0s
+4 rows, 5 cols, 15 nonzeros  0s
+Presolve : Reductions: rows 4(-1); columns 5(-1); elements 15(-8)
+Solving the presolved LP
+Using EKK dual simplex solver - serial
+  Iteration        Objective     Infeasibilities num(sum)
+          0    -1.2749287565e+02 Ph1: 4(12.2); Du: 5(127.493) 0s
+          7    -1.7592592593e+04 Pr: 0(0) 0s
+Solving the original LP from the solution after postsolve
+Model   status      : Optimal
+Simplex   iterations: 7
+Objective value     :  1.7592592593e+04
+HiGHS run time      :          0.00
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+LP   test has 5 rows; 6 cols; 23 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 9e+00]
+  Cost   [1e+02, 2e+02]
+  Bound  [0e+00, 0e+00]
+  RHS    [2e+02, 2e+02]
+Presolving model
+5 rows, 6 cols, 23 nonzeros  0s
+4 rows, 5 cols, 15 nonzeros  0s
+4 rows, 5 cols, 15 nonzeros  0s
+Presolve : Reductions: rows 4(-1); columns 5(-1); elements 15(-8)
+Solving the presolved LP
+Using EKK dual simplex solver - serial
+  Iteration        Objective     Infeasibilities num(sum)
+          0    -1.2749287565e+02 Ph1: 4(12.2); Du: 5(127.493) 0s
+          7    -1.7592592593e+04 Pr: 0(0) 0s
+Solving the original LP from the solution after postsolve
+Model   status      : Optimal
+Simplex   iterations: 7
+Objective value     :  1.7592592593e+04
+HiGHS run time      :          0.00
+Writing the solution to solution.txt
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+LP   problem has 2 rows; 2 cols; 4 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 5e+00]
+  Cost   [1e+00, 1e+00]
+  Bound  [0e+00, 0e+00]
+  RHS    [2e+00, 6e+00]
+Presolving model
+2 rows, 2 cols, 4 nonzeros  0s
+0 rows, 0 cols, 0 nonzeros  0s
+Presolve : Reductions: rows 0(-2); columns 0(-2); elements 0(-4) - Reduced to empty
+Solving the original LP from the solution after postsolve
+Model   status      : Optimal
+Objective value     :  3.0000000000e+00
+HiGHS run time      :          0.00
+Writing the solution to problem.txt
+Running HiGHS 1.7.2 (git hash: 5ce7a2753): Copyright (c) 2024 HiGHS under MIT licence terms
+LP   simple has 3 rows; 2 cols; 4 nonzeros
+Coefficient ranges:
+  Matrix [1e+00, 1e+00]
+  Cost   [2e+00, 3e+00]
+  Bound  [0e+00, 0e+00]
+  RHS    [2e+00, 4e+00]
+Presolving model
+1 rows, 2 cols, 2 nonzeros  0s
+1 rows, 2 cols, 2 nonzeros  0s
+Presolve : Reductions: rows 1(-2); columns 2(-0); elements 2(-2)
+Solving the presolved LP
+Using EKK dual simplex solver - serial
+  Iteration        Objective     Infeasibilities num(sum)
+          0     0.0000000000e+00 Ph1: 0(0) 0s
+          1    -1.0000000000e+01 Pr: 0(0) 0s
+Solving the original LP from the solution after postsolve
+Model   status      : Optimal
+Simplex   iterations: 1
+Objective value     :  1.0000000000e+01
+HiGHS run time      :          0.00
+Writing the solution to simple.txt
