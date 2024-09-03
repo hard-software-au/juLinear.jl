@@ -13,22 +13,28 @@ Linear programming is a powerful mathematical method used to optimize a linear o
 
 Whether you're a beginner trying to grasp the basics of linear programming or an advanced user exploring the nuances of LP solvers, this repository offers a practical, hands-on experience.
 
-
-
 ### Directories
 
 - **LaTeX**: Contains LaTeX documents related to the project. This may include reports, documentation, or any other typesetting related files.
 
-- **benchmarks**: This directory contains all the mps files for benchmarking codes.
+- **check**: This directory contains test scripts and benchmark MPS files.
 
-- **lp_julia**: The primary directory for the Julia programming files and Jupyter notebooks related to linear programming.
+  - **benchmarks/mps_files**: Contains various MPS files used for benchmarking the LP algorithms.
+  
+  - **test**: Contains test scripts to validate the functionality of various modules in the repository.
+  
+- **docs**: Documentation and diagrams related to the project.
+
+  - **diagrams**: Contains visual representations, including PNGs and SVGs, that support the project's documentation.
+
+- **src**: The primary directory for the Julia programming files and Jupyter notebooks related to linear programming.
 
   - **code**: Contains Julia scripts that define constants, utility functions, problem definitions, and MPS file reading utilities.
   
     - `lp_constants.jl`: Contains constants used across various modules.
     - `lp_problem.jl`: Defines the structure and methods for representing linear programming problems.
     - `lp_read_mps.jl`: Functions for reading and parsing MPS files.
-    - `lp_simplex_tableau.jl`: Implements the Simplex algorithm for solving LP problems.
+    - `lp_read_mps_mip.jl`: Functions for reading and parsing MPS files for MIP problems.
     - `lp_utils.jl`: Utility functions used throughout the project.
   
   - **notebooks**: Jupyter notebooks used for interactive exploration, development, and demonstration of linear programming concepts and algorithms.
@@ -40,14 +46,15 @@ Whether you're a beginner trying to grasp the basics of linear programming or an
     - `lp_presolve_notebook.ipynb`: Notebook focused on presolve techniques in linear programming.
     - `lp_simplex_tableau.ipynb`: First exploration of tableau.
   
-- **test**: Contains test scripts to validate the functionality of various modules in the repository.
+  - **tools**: Contains additional scripts and tools that support the main codebase, such as analysis scripts.
 
 ## Usage
 
 ### Adding New Modules
 
-To add a new Julia module, place your `.jl` file in the `julia_files` directory and update the `LOAD_PATH` in your scripts or notebooks to include the new module. Example:
+To add a new Julia module, place your `.jl` file in the `src/code` directory and update the `LOAD_PATH` in your scripts or notebooks to include the new module. Example:
 
 ```julia
 push!(LOAD_PATH, realpath("../code"))
 using new_module_name
+
