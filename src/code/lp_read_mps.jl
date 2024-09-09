@@ -2,9 +2,13 @@ module lp_read_mps
 
 using SparseArrays
 using DataStructures
+using JuMP
+using MathOptInterface
+const MOI = MathOptInterface
+
 using lp_problem
 
-export read_mps_from_string, read_mps_from_file, read_mps_from_string_mip, read_mps_from_file_mip, read_file_to_string
+export read_mps_from_string, read_mps_from_file, read_mps_from_string_mip, read_mps_from_file_mip, read_file_to_string, read_mps_with_JuMP_MIP
 
 
 """
@@ -147,6 +151,11 @@ function read_mps_from_string(mps_string::String)
 
     return LPProblem(is_minimize, c, A, b, lb, ub, vars, constraint_types)
 end
+
+
+####################################################################################
+## read_mps_from_file_mip
+####################################################################################
 
 """
     read_mps_from_string_mip(mps_string::String) -> MIPProblem
@@ -325,6 +334,10 @@ function read_mps_from_string_mip(mps_string::String)
     return mip_problem
 end
 
+###################################################################################
+## File methods
+###################################################################################
+
 # New function to read a file and return its contents as a string
 function read_file_to_string(file_path::String)
     return open(file_path, "r") do f
@@ -342,6 +355,130 @@ end
 function read_mps_from_file_mip(file_path::String)
     mps_string = read_file_to_string(file_path)
     return read_mps_from_string_mip(mps_string)
+end
+
+####################################################################################
+# JuMP fuction
+####################################################################################
+
+# Function to determine the type of variable
+function get_variable_type(var)
+    if is_binary(var)
+        return "Binary"
+    elseif is_integer(var)
+        return "Integer"
+    else
+        return "Continuous"
+    end
+end
+
+function read_mps_with_JuMP_MIP(file_path::String)
+    # Create a JuMP model
+    model = Model()
+
+    # Read the MPS file into the model
+    MOI.read_from_file(model.moi_backend, file_path)
+
+    # Extract variables
+    variables = all_variables(model)
+
+    # Extract variable names
+    variable_names = [name(var) for var in variables]
+
+    # Extract the objective function (assumes a linear objective)
+    objective_function = MOI.get(model.moi_backend, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    objective_coeffs = zeros(Float64, length(variables))
+
+    # Populate the objective coefficients array
+    for term in objective_function.terms
+        objective_coeffs[term.variable.value] = term.coefficient
+    end
+
+    # Determine whether it's a minimization or maximization problem
+    is_minimize = MOI.get(model.moi_backend, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+
+    # Separate constraints by type
+    less_than_constraints = MOI.get(model.moi_backend, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
+    greater_than_constraints = MOI.get(model.moi_backend, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
+    equal_to_constraints = MOI.get(model.moi_backend, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}())
+
+    constraint_matrix_rows = Int64[]
+    constraint_matrix_cols = Int64[]
+    constraint_matrix_vals = Float64[]
+    rhs_values = Float64[]
+    constraint_types = Char[]
+
+    # Process LessThan constraints
+    for con in less_than_constraints
+        func = MOI.get(model.moi_backend, MOI.ConstraintFunction(), con)
+        set = MOI.get(model.moi_backend, MOI.ConstraintSet(), con)
+        
+        for term in func.terms
+            push!(constraint_matrix_rows, con.value)  # Constraint index
+            push!(constraint_matrix_cols, term.variable.value)  # Variable index
+            push!(constraint_matrix_vals, term.coefficient)
+        end
+        push!(rhs_values, set.upper)
+        push!(constraint_types, 'L')
+    end
+
+    # Process GreaterThan constraints
+    for con in greater_than_constraints
+        func = MOI.get(model.moi_backend, MOI.ConstraintFunction(), con)
+        set = MOI.get(model.moi_backend, MOI.ConstraintSet(), con)
+        
+        for term in func.terms
+            push!(constraint_matrix_rows, con.value)  # Constraint index
+            push!(constraint_matrix_cols, term.variable.value)  # Variable index
+            push!(constraint_matrix_vals, term.coefficient)
+        end
+        push!(rhs_values, set.lower)
+        push!(constraint_types, 'G')
+    end
+
+    # Process EqualTo constraints
+    for con in equal_to_constraints
+        func = MOI.get(model.moi_backend, MOI.ConstraintFunction(), con)
+        set = MOI.get(model.moi_backend, MOI.ConstraintSet(), con)
+        
+        for term in func.terms
+            push!(constraint_matrix_rows, con.value)  # Constraint index
+            push!(constraint_matrix_cols, term.variable.value)  # Variable index
+            push!(constraint_matrix_vals, term.coefficient)
+        end
+        push!(rhs_values, set.value)
+        push!(constraint_types, 'E')
+    end
+
+    # Convert to sparse matrix
+    constraint_matrix = sparse(constraint_matrix_rows, constraint_matrix_cols, constraint_matrix_vals, length(rhs_values), length(variables))
+
+    # Define lower and upper bounds
+    lower_bounds = fill(0.0, length(variables))  # Default lower bounds (0.0)
+    upper_bounds = fill(Inf, length(variables))  # Default upper bounds (Inf)
+
+    # Variable types array
+    variable_types = Vector{Symbol}(undef, length(variables))
+
+    # Determine the type of each variable using the provided get_variable_type function
+    for (i, var) in enumerate(variables)
+        variable_types[i] = Symbol(get_variable_type(var))
+    end
+
+    # Construct the MIPProblem struct
+    mip_problem = MIPProblem(
+        is_minimize,
+        objective_coeffs,
+        constraint_matrix,
+        rhs_values,
+        lower_bounds,
+        upper_bounds,
+        variable_names,
+        variable_types,
+        constraint_types,
+    )
+
+    return mip_problem
 end
 
 
