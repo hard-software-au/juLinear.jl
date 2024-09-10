@@ -5,6 +5,8 @@ using SparseArrays
 # Export the LPProblem struct
 export LPProblem
 export MIPProblem
+export PreprocessedLPProblem
+
 
 # Define a struct to represent a Linear Programming problem
 
@@ -19,6 +21,7 @@ struct LPProblem
     constraint_types::Vector{Char}  # Constraint types
 end
 
+
 # Define a struct to represent A Mixed Integer Program
 
 struct MIPProblem
@@ -31,6 +34,17 @@ struct MIPProblem
     vars::Vector{String}  # Variable names
     variable_types::Vector{Symbol}  # Array of variable types, same length as vars
     constraint_types::Vector{Char}  # Constraint types
+end
+
+
+# Define a struct for preprocessing lp problem
+
+struct PreprocessedLPProblem
+    original_problem::LPProblem  # The original LP problem before preprocessing
+    reduced_problem::LPProblem   # The reduced LP problem after preprocessing
+    removed_rows::Vector{Int}    # Indices of removed rows
+    removed_cols::Vector{Int}    # Indices of removed columns (if applicable)
+    row_ratios::Dict{Int, Tuple{Int, Float64}}  # Mapping of removed rows to their corresponding row and ratio
 end
 
 end # module
