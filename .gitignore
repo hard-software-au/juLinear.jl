@@ -1,1 +1,25 @@
+# Remove .vscode file
+.vscode
+
+# Remove mac files
 .DS_Store
+
+
+#############
+##  LaTeX  ##
+#############
+
+# Ignore LaTeX auxiliary files
+*.aux
+*.log
+*.toc
+*.synctex.gz
+#*.pdf
+
+# Ignore any backup files created by LaTeX editors
+*.bak
+*.fls
+*.fdb_latexmk
+
+# Ignore build directories (if applicable)
+_build/
