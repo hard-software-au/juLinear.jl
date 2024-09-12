@@ -18,6 +18,24 @@ using lp_standard_form_converter
 
 println("Hello User")
 
+
+"""
+    parse_commandline() -> Dict
+
+Parses command-line arguments using the ArgParse package. It defines options such as the problem file path, method type (simplex or interior point), optimization type (minimization or maximization), and verbosity.
+
+# Returns
+- `Dict`: A dictionary of parsed arguments.
+
+# Command-Line Arguments
+- `--filename, -f`: Path to the problem file in MPS format (required).
+- `--interior, -i`: Use the interior point method (LP only).
+- `--min`: Minimize the objective function (default).
+- `--max`: Maximize the objective function.
+- `--no_presolve`: Skip the presolve step (default is false).
+- `--simplex, -s`: Use the simplex method (default).
+- `--verbose, -v`: Enable verbose output.
+"""
 function parse_commandline()
     # Initialize ArgParse settings
     s = ArgParseSettings()
@@ -26,8 +44,9 @@ function parse_commandline()
     @add_arg_table! s begin
         "--filename", "-f"
             help = "Path to the problem file (mps format)"
+            default = "/Users/roryyarr/Desktop/Linear Programming/lp_code/check/problems/mps_files/ex_9-7.mps"
             arg_type = String
-            required = true
+            required = false
         
         "--interior", "-i"
             help = "Use interior point method (LP only)"
@@ -58,14 +77,42 @@ function parse_commandline()
     return parse_args(s)
 end
 
-# Function to load an LP problem from an MPS file
+
+"""
+    load_lp_problem_from_mps(filename::String) -> LPProblem
+
+Loads a linear programming (LP) problem from an MPS file. It uses the `read_mps_from_file` function to read and parse the problem into an `LPProblem` struct.
+
+# Arguments
+- `filename::String`: The path to the MPS file containing the LP problem.
+
+# Returns
+- `LPProblem`: The parsed LP problem struct.
+
+# Example
+```julia
+lp = load_lp_problem_from_mps("problem.mps")
+```
+"""
 function load_lp_problem_from_mps(filename::String)
     println("Loading LP problem from file: $filename")
     lp = read_mps_from_file(filename)  # Assuming read_mps is defined in lp_read_mps
     return lp
 end
 
-# Function to handle LP operations based on arguments
+"""
+    handle_lp_operations(parsed_args::Dict)
+
+Handles the operations required to solve the LP problem based on the parsed command-line arguments. It decides which method (simplex or interior point) to use, whether to presolve, and whether to minimize or maximize the objective function.
+
+# Arguments
+- `parsed_args::Dict`: The parsed command-line arguments, including options such as the file path, optimization method, and presolve option.
+
+# Example
+```julia
+handle_lp_operations(parsed_args)
+```
+"""
 function handle_lp_operations(parsed_args)
     lp = load_lp_problem_from_mps(parsed_args["filename"])
 
@@ -92,7 +139,16 @@ function handle_lp_operations(parsed_args)
     end
 end
 
-# Main execution function using command-line args
+"""
+    main()
+
+The main function that orchestrates the entire LP solving process. It parses command-line arguments, handles problem type (minimization or maximization), and calls the appropriate method (simplex or interior point) based on user input.
+
+# Example
+```bash
+julia we_need_a_name.jl --filename "../check/problems/mps_files/ex_9-7.mps" --min --simplex --no_presolve --verbose
+```
+"""
 function main()
     parsed_args = parse_commandline()
 
