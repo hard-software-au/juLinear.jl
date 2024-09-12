@@ -7,17 +7,24 @@ import lp_problem: LPProblem, MIPProblem
 export convert_to_standard_form
 export convert_to_standard_form_mip
 
-#=
-    convert_to_standard_form(lp::LPProblem)
+"""
+    convert_to_standard_form(lp::LPProblem) -> (new_A::SparseMatrixCSC, new_b::Vector{Float64}, new_c::Vector{Float64})
 
-Converts a given `LPProblem` to its standard form.
+Converts a given `LPProblem` to its standard form, transforming the constraints and objective function to fit the requirements of the standard linear programming form.
 
-Arguments:
-- `lp`: An `LPProblem` struct representing the Linear Programming problem.
+# Arguments
+- `lp::LPProblem`: A struct representing the Linear Programming problem, containing the objective function, constraints, and bounds.
 
-Returns:
-- A tuple `(new_A, new_b, new_c)` representing the standard form of the LP problem.
-=#
+# Returns
+- `new_A::SparseMatrixCSC`: The transformed constraint matrix in standard form.
+- `new_b::Vector{Float64}`: The transformed right-hand side of the constraints.
+- `new_c::Vector{Float64}`: The transformed objective function coefficients.
+
+# Method Details
+- Handles lower and upper bounds for variables by adding additional constraints if necessary.
+- Transforms the problem to ensure all constraints are in the form of inequalities.
+- Adjusts the objective function if the problem is a maximization (standard form assumes minimization).
+"""
 function convert_to_standard_form(lp::LPProblem)
     c, A, b, l, u = lp.c, lp.A, lp.b, lp.l, lp.u
     m, n = size(A)
@@ -69,17 +76,25 @@ end
 ## MIP code
 ###################################################################################
 
-#=
-    convert_to_standard_form_mip(mip::MIPProblem)
+"""
+    convert_to_standard_form_mip(mip::MIPProblem) -> (new_A::SparseMatrixCSC, new_b::Vector{Float64}, new_c::Vector{Float64}, new_variable_types::Vector{Symbol})
 
-Converts a given `MIPProblem` to its standard form.
+Converts a given `MIPProblem` to its standard form, transforming the constraints and objective function to fit the requirements of the standard mixed integer programming form.
 
-Arguments:
-- `mip`: A `MIPProblem` struct representing the Mixed Integer Programming problem.
+# Arguments
+- `mip::MIPProblem`: A struct representing the Mixed Integer Programming problem, containing the objective function, constraints, bounds, and variable types.
 
-Returns:
-- A tuple `(new_A, new_b, new_c, new_variable_types)` representing the standard form of the MIP problem.
-=#
+# Returns
+- `new_A::SparseMatrixCSC`: The transformed constraint matrix in standard form.
+- `new_b::Vector{Float64}`: The transformed right-hand side of the constraints.
+- `new_c::Vector{Float64}`: The transformed objective function coefficients.
+- `new_variable_types::Vector{Symbol}`: The updated variable types, including new slack variables added during the transformation.
+
+# Method Details
+- Adds constraints to handle lower and upper bounds by introducing slack variables.
+- Ensures all constraints are in standard form (inequalities) and adjusts the right-hand side appropriately.
+- Adjusts the objective function if the problem is a maximization (standard form assumes minimization).
+"""
 function convert_to_standard_form_mip(mip::MIPProblem)
     c, A, b, l, u = mip.c, mip.A, mip.b, mip.l, mip.u
     variable_types = mip.variable_types
