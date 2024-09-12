@@ -10,7 +10,50 @@ using lp_standard_form_converter
 # Export the revised_simplex function to make it available outside the module
 export revised_simplex
 
+"""
+    revised_simplex(lp::LPProblem) -> (solution::Vector{Float64}, optimal_value::Float64)
 
+Solves a linear programming (LP) problem using the revised simplex method. This function converts the LP problem to its standard form and iteratively finds the optimal solution by adjusting the basis variables.
+
+# Arguments
+- `lp::LPProblem`: An `LPProblem` struct representing the linear programming problem to be solved. It contains the objective function, constraints, and bounds.
+
+# Returns
+- `solution::Vector{Float64}`: The optimal values for the decision variables in the LP problem.
+- `optimal_value::Float64`: The optimal objective value, calculated from the solution.
+
+# Method Overview
+1. Converts the given LP problem to its standard form (minimization, inequality constraints).
+2. Initializes the basis using slack variables.
+3. Iteratively computes the basic solution by solving a system of linear equations for the current basis.
+4. Computes the reduced costs to determine optimality.
+5. Selects the entering variable (non-basic variable) and computes the direction vector.
+6. Selects the leaving variable (basic variable) based on the direction vector and updates the basis.
+7. Repeats steps 3-6 until the optimal solution is found or the problem is determined to be unbounded.
+
+# Notes
+- The function assumes that the LP problem is bounded and feasible.
+- If unboundedness is detected, the function throws an error.
+- Iteration limit is set to 10 for demonstration purposes. This can be improved with a more robust termination criterion.
+
+# Usage Example
+```julia
+lp = LPProblem(
+    is_minimize = true,
+    c = [-3.0, -2.0],
+    A = sparse([1.0 2.0; 1.0 1.0]),
+    b = [4.0, 2.0],
+    l = [0.0, 0.0],
+    u = [Inf, Inf],
+    vars = ["x1", "x2"],
+    constraint_types = ['L', 'L']
+)
+
+solution, optimal_value = revised_simplex(lp)
+println("Optimal solution: ", solution)
+println("Optimal value: ", optimal_value)
+```
+"""
 function revised_simplex(lp::LPProblem)
     println("Converting problem to standard form...")
     A, b, c = convert_to_standard_form(lp)

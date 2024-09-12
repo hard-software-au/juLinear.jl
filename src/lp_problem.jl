@@ -7,9 +7,25 @@ export LPProblem
 export MIPProblem
 export PreprocessedLPProblem
 
+##############################################################################
+#### LPProblem Struct
+##############################################################################
 
-# Define a struct to represent a Linear Programming problem
+"""
+    struct LPProblem
 
+Represents a standard Linear Programming (LP) problem.
+
+# Fields:
+- `is_minimize::Bool`: `true` if the objective is to minimize, `false` if it is to maximize.
+- `c::Vector{Float64}`: The objective function coefficients.
+- `A::SparseMatrixCSC{Float64, Int64}`: The sparse constraint matrix.
+- `b::Vector{Float64}`: The right-hand side values of the constraints.
+- `l::Vector{Float64}`: The lower bounds for the decision variables.
+- `u::Vector{Float64}`: The upper bounds for the decision variables.
+- `vars::Vector{String}`: The names of the decision variables.
+- `constraint_types::Vector{Char}`: The types of constraints (e.g., `<=`, `>=`, `=`).
+"""
 struct LPProblem
     is_minimize::Bool  # True if the objective is to minimize
     c::Vector{Float64}  # Objective function coefficients
@@ -21,9 +37,26 @@ struct LPProblem
     constraint_types::Vector{Char}  # Constraint types
 end
 
+##############################################################################
+#### MIPProblem Struct
+##############################################################################
 
-# Define a struct to represent A Mixed Integer Program
+"""
+    struct MIPProblem
 
+Represents a Mixed Integer Programming (MIP) problem. Extends the `LPProblem` struct to include variable types.
+
+# Fields:
+- `is_minimize::Bool`: `true` if the objective is to minimize, `false` if it is to maximize.
+- `c::Vector{Float64}`: The objective function coefficients.
+- `A::SparseMatrixCSC{Float64, Int64}`: The sparse constraint matrix.
+- `b::Vector{Float64}`: The right-hand side values of the constraints.
+- `l::Vector{Float64}`: The lower bounds for the decision variables.
+- `u::Vector{Float64}`: The upper bounds for the decision variables.
+- `vars::Vector{String}`: The names of the decision variables.
+- `variable_types::Vector{Symbol}`: The types of variables (e.g., `:Binary`, `:Integer`, `:Continuous`).
+- `constraint_types::Vector{Char}`: The types of constraints (e.g., `<=`, `>=`, `=`).
+"""
 struct MIPProblem
     is_minimize::Bool  # True if the objective is to minimize
     c::Vector{Float64}  # Objective function coefficients
@@ -36,9 +69,22 @@ struct MIPProblem
     constraint_types::Vector{Char}  # Constraint types
 end
 
+##############################################################################
+#### PreprocessedLPProblem Struct
+##############################################################################
 
-# Define a struct for preprocessing lp problem
+"""
+    struct PreprocessedLPProblem
 
+Stores the original and reduced versions of an LP problem during preprocessing, as well as information about removed rows and columns.
+
+# Fields:
+- `original_problem::LPProblem`: The original LP problem before preprocessing.
+- `reduced_problem::LPProblem`: The reduced LP problem after preprocessing.
+- `removed_rows::Vector{Int}`: Indices of rows removed during preprocessing.
+- `removed_cols::Vector{Int}`: Indices of columns removed during preprocessing.
+- `row_ratios::Dict{Int, Tuple{Int, Float64}}`: Maps removed rows to their corresponding row and the ratio between them.
+"""
 struct PreprocessedLPProblem
     original_problem::LPProblem  # The original LP problem before preprocessing
     reduced_problem::LPProblem   # The reduced LP problem after preprocessing
@@ -48,3 +94,4 @@ struct PreprocessedLPProblem
 end
 
 end # module
+

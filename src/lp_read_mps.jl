@@ -11,6 +11,65 @@ using lp_problem
 export read_mps_from_string, read_mps_from_file, read_mps_from_string_mip, read_mps_from_file_mip, read_file_to_string, read_mps_with_JuMP_MIP
 
 
+###################################################################################
+## File methods
+###################################################################################
+
+"""
+    read_file_to_string(file_path::String) -> String
+
+Reads the contents of a file and returns it as a string.
+
+# Arguments
+- `file_path::String`: The path to the file.
+
+# Returns
+- `String`: The contents of the file as a string.
+"""
+function read_file_to_string(file_path::String)
+    return open(file_path, "r") do f
+        read(f, String)
+    end
+end
+
+"""
+    read_mps_from_file(file_path::String) -> LPProblem
+
+Reads an MPS file and converts it into an `LPProblem` struct.
+
+# Arguments
+- `file_path::String`: The path to the MPS file.
+
+# Returns
+- `LPProblem`: A struct containing the LP problem data.
+"""
+function read_mps_from_file(file_path::String)
+    mps_string = read_file_to_string(file_path)
+    return read_mps_from_string(mps_string)
+end
+
+"""
+    read_mps_from_file_mip(file_path::String) -> MIPProblem
+
+Reads an MPS file and converts it into a `MIPProblem` struct.
+
+# Arguments
+- `file_path::String`: The path to the MPS file.
+
+# Returns
+- `MIPProblem`: A struct containing the MIP problem data.
+"""
+function read_mps_from_file_mip(file_path::String)
+    mps_string = read_file_to_string(file_path)
+    return read_mps_from_string_mip(mps_string)
+end
+
+
+###################################################################################
+## read_mps_from_string
+###################################################################################
+
+
 """
     read_mps_from_string(mps_string::String) -> LPProblem
 
@@ -160,7 +219,13 @@ end
 """
     read_mps_from_string_mip(mps_string::String) -> MIPProblem
 
-This function parses a given MPS formatted string and converts it into a `MIPProblem` struct, representing a Mixed Integer Programming (MIP) problem in Julia.
+Parses a given MPS formatted string and converts it into a `MIPProblem` struct.
+
+# Arguments
+- `mps_string::String`: A string representing the content of an MPS file.
+
+# Returns
+- `MIPProblem`: A struct containing the MIP problem data.
 """
 function read_mps_from_string_mip(mps_string::String)
     lines = split(mps_string, '\n')
@@ -334,34 +399,33 @@ function read_mps_from_string_mip(mps_string::String)
     return mip_problem
 end
 
-###################################################################################
-## File methods
-###################################################################################
-
-# New function to read a file and return its contents as a string
-function read_file_to_string(file_path::String)
-    return open(file_path, "r") do f
-        read(f, String)
-    end
-end
-
-# Modified function for reading LP problems from an MPS file
-function read_mps_from_file(file_path::String)
-    mps_string = read_file_to_string(file_path)
-    return read_mps_from_string(mps_string)
-end
-
-# Modified function for reading MIP problems from an MPS file
-function read_mps_from_file_mip(file_path::String)
-    mps_string = read_file_to_string(file_path)
-    return read_mps_from_string_mip(mps_string)
-end
 
 ####################################################################################
-# JuMP fuction
+# JuMP based reader
 ####################################################################################
 
-# Function to determine the type of variable
+
+"""
+    get_variable_type(var) -> String
+
+Determines the type of a variable in a mathematical optimization model.
+
+# Arguments
+- `var`: The variable whose type is to be determined. This is typically a variable from a mathematical optimization model, such as a JuMP variable.
+
+# Returns
+- `String`: The type of the variable as a string. Possible values are:
+    - `"Binary"`: If the variable is binary (i.e., it can take values 0 or 1).
+    - `"Integer"`: If the variable is an integer (i.e., it can take integer values).
+    - `"Continuous"`: If the variable is continuous (i.e., it can take any real value).
+
+# Example
+```julia
+var = @variable(model, Bin)
+println(get_variable_type(var))  # Outputs "Binary"
+```
+This function uses `is_binary` and `is_integer` to determine whether a variable is binary, integer, or continuous. 
+"""
 function get_variable_type(var)
     if is_binary(var)
         return "Binary"
@@ -372,6 +436,18 @@ function get_variable_type(var)
     end
 end
 
+
+"""
+    read_mps_with_JuMP_MIP(file_path::String) -> MIPProblem
+
+Reads an MPS file using JuMP and converts it into a `MIPProblem` struct.
+
+# Arguments
+- `file_path::String`: The path to the MPS file.
+
+# Returns
+- `MIPProblem`: A struct containing the MIP problem data.
+"""
 function read_mps_with_JuMP_MIP(file_path::String)
     # Create a JuMP model
     model = Model()
