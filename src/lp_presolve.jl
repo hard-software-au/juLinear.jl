@@ -12,19 +12,19 @@ export presolve_lp, lp_remove_zero_rows, lp_remove_row_singletons, lp_remove_zer
 ##############################################################################
 
 """
-    lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, debug::Bool=false)
+    lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
 
 Removes rows from the constraint matrix `A` of the `PreprocessedLPProblem` that consist only of zeros. 
 
 # Arguments:
 - `preprocessed_problem`: The `PreprocessedLPProblem` struct that contains the original and reduced problem.
 - `ε`: Threshold below which values are considered zero. Defaults to `1e-8`.
-- `debug`: If `true`, prints debugging information. Defaults to `false`.
+- `verbose`: If `true`, prints debugging information. Defaults to `false`.
 
 # Returns:
 A new `PreprocessedLPProblem` with rows removed from the reduced problem.
 """
-function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, debug::Bool = false)
+function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
     # Unpack problem
     original_lp = preprocessed_problem.original_problem
     reduced_lp = preprocessed_problem.reduced_problem
@@ -37,7 +37,7 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
     new_removed_rows = setdiff(1:size(reduced_lp.A, 1), non_zero_rows)
 
     # debug statements
-    if debug 
+    if verbose 
         println("#" ^ 80)
         println("~" ^ 80)
         println("Remove rows function")
@@ -82,19 +82,19 @@ end
 ##############################################################################
 
 """
-    lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, debug::Bool=false)
+    lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
 
 Removes columns from the constraint matrix `A` of the `PreprocessedLPProblem` that consist only of zeros.
 
 # Arguments:
 - `preprocessed_lp`: The `PreprocessedLPProblem` struct containing the original and reduced problem.
 - `ε`: Threshold below which values are considered zero. Defaults to `1e-8`.
-- `debug`: If `true`, prints debugging information. Defaults to `false`.
+- `verbose`: If `true`, prints debugging information. Defaults to `false`.
 
 # Returns:
 A new `PreprocessedLPProblem` with columns removed from the reduced problem.
 """
-function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1e-8, debug::Bool = false)
+function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
     # Unpack problem
     original_lp = lp_model.original_problem
     reduced_lp = lp_model.reduced_problem
@@ -111,7 +111,7 @@ function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1
 
 
     # Debug statements
-    if debug 
+    if verbose
         println("#" ^ 80)
         println("~" ^ 80)
         println("Remove row singletons function")
@@ -154,19 +154,19 @@ end
 ##############################################################################
 
 """
-    lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, debug::Bool=false)
+    lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
 
 Removes linearly dependent rows from the constraint matrix `A` of the `PreprocessedLPProblem`. Detects and eliminates rows that are linear combinations of other rows.
 
 # Arguments:
 - `preprocessed_lp`: The `PreprocessedLPProblem` struct containing the original and reduced problem.
 - `ε`: Threshold below which values are considered zero. Defaults to `1e-8`.
-- `debug`: If `true`, prints debugging information. Defaults to `false`.
+- `verbose`: If `true`, prints debugging information. Defaults to `false`.
 
 # Returns:
 A new `PreprocessedLPProblem` with linearly dependent rows removed.
 """
-function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, debug::Bool=false)
+function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
     # Find non-zero columns
     non_zero_columns = [j for j in 1:size(preprocessed_lp.reduced_problem.A, 2) if any(abs.(preprocessed_lp.reduced_problem.A[:, j]) .> ε)]
     new_removed_columns = setdiff(1:size(preprocessed_lp.reduced_problem.A, 2), non_zero_columns)
@@ -212,19 +212,19 @@ end
 ##############################################################################
 
 """
-    lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, debug::Bool=false)
+    lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
 
 Removes linearly dependent rows from the constraint matrix `A` of the `PreprocessedLPProblem`. Detects and eliminates rows that are linear combinations of other rows.
 
 # Arguments:
 - `preprocessed_lp`: The `PreprocessedLPProblem` struct containing the original and reduced problem.
 - `ε`: Threshold below which values are considered zero. Defaults to `1e-8`.
-- `debug`: If true, prints debugging information. Defaults to `false`.
+- `verbose`: If true, prints debugging information. Defaults to `false`.
 
 # Returns:
 A new `PreprocessedLPProblem` with linearly dependent rows removed.
 """
-function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, debug::Bool=false)
+function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
     # Create the augmented matrix [A b]
     augmented_matrix = hcat(preprocessed_lp.reduced_problem.A, preprocessed_lp.reduced_problem.b)
     
@@ -264,7 +264,7 @@ function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProble
     row_ratios = SortedDict(row_ratios)
 
     # Debug statments
-    if debug
+    if verbose
         # Debug block
         println("#" ^ 80)
         println("~" ^ 80)
@@ -326,19 +326,19 @@ Applies presolve routines to the given `LPProblem` to reduce the problem size by
 # Returns:
 A `PreprocessedLPProblem` with a reduced problem that excludes zero rows, zero columns, singleton rows, and linearly dependent rows.
 """
-function presolve_lp(lp_problem::LPProblem; debug::Bool=false)
+function presolve_lp(lp_problem::LPProblem; verbose::Bool=false)
     # Initialize PreprocessedLPProblem
     preprocessed_lp = PreprocessedLPProblem(lp_problem, lp_problem, Int[], Int[], Dict())
 
     # Preprocessing methods
-    preprocessed_lp = lp_remove_zero_rows(preprocessed_lp; debug=debug)
-    preprocessed_lp = lp_remove_row_singletons(preprocessed_lp, debug=debug)
+    preprocessed_lp = lp_remove_zero_rows(preprocessed_lp; verbose=verbose)
+    preprocessed_lp = lp_remove_row_singletons(preprocessed_lp, verbose=verbose)
 
 
-    preprocessed_lp = lp_remove_zero_columns(preprocessed_lp; debug=debug)
+    preprocessed_lp = lp_remove_zero_columns(preprocessed_lp; verbose=verbose)
 
 
-    preprocessed_lp = lp_remove_linearly_dependent_rows(preprocessed_lp, debug=debug)
+    preprocessed_lp = lp_remove_linearly_dependent_rows(preprocessed_lp, verbose=verbose)
 
     
     return preprocessed_lp
