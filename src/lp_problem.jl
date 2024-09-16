@@ -84,6 +84,7 @@ Stores the original and reduced versions of an LP problem during preprocessing, 
 - `removed_rows::Vector{Int}`: Indices of rows removed during preprocessing.
 - `removed_cols::Vector{Int}`: Indices of columns removed during preprocessing.
 - `row_ratios::Dict{Int, Tuple{Int, Float64}}`: Maps removed rows to their corresponding row and the ratio between them.
+- `var_solutions::Dict{String, Float64}}`: Maps solved varibles to their corresponding values.
 """
 struct PreprocessedLPProblem
     original_problem::LPProblem  # The original LP problem before preprocessing
@@ -91,6 +92,7 @@ struct PreprocessedLPProblem
     removed_rows::Vector{Int}    # Indices of removed rows
     removed_cols::Vector{Int}    # Indices of removed columns (if applicable)
     row_ratios::Dict{Int, Tuple{Int, Float64}}  # Mapping of removed rows to their corresponding row and ratio
+    var_solutions::Dict{String, Float64}  # Mapping of variable names to their solution values
 end
 
 end # module
