@@ -25,7 +25,7 @@ Represents a linear programming (LP) or mixed integer programming (MIP) problem.
 - `l::Vector{Float64}`: Lower bounds for variables (l in l ≤ X).
 - `u::Vector{Float64}`: Upper bounds for variables (u in X ≤ u).
 - `vars::Vector{String}`: Names of variables (e.g., ["x1", "x2", "x3"]).
-- `variable_types::Vector{Symbol}`: Types of variables (e.g., `:continuous`, `:integer`, `:binary`).
+- `variable_types::Vector{Symbol}`: Types of variables (e.g., `:Continuous`, `:Integer`, `:Binary`).
 
 # Example:
 ```julia
@@ -38,7 +38,7 @@ lp = LPProblem(
     l = [0.0, 0.0, 0.0],  # Lower bounds for variables
     u = [Inf, Inf, 1.0],  # Upper bounds (third variable is binary)
     vars = ["x1", "x2", "x3"],  # Variable names
-    variable_types = [:continuous, :integer, :binary]  # Types of variables
+    variable_types = [:Continuous, :Integer, :Binary]  # Types of variables
 )
 ```
 """
@@ -51,7 +51,7 @@ struct LPProblem
     l::Vector{Float64}            # Lower bounds (l in l ≤ X)
     u::Vector{Float64}            # Upper bounds (u in X ≤ u)
     vars::Vector{String}          # Variable names (X_B, X_N)
-    variable_types::Vector{Symbol}  # Variable types (:continuous, :integer, :binary)
+    variable_types::Vector{Symbol}  # Variable types (:Continuous, :Integer, :Binary)
 end
 
 
@@ -91,6 +91,18 @@ preprocessed_lp = PreprocessedLPProblem(
 )
 ```
 """
+struct PreprocessedLPProblem
+    original_problem::LPProblem       # The original LP or MIP problem before preprocessing
+    reduced_problem::LPProblem        # The reduced problem after preprocessing
+    removed_rows::Vector{Int}         # Indices of removed rows
+    removed_cols::Vector{Int}         # Indices of removed columns (if applicable)
+    row_ratios::Dict{Int, Tuple{Int, Float64}}  # Mapping of removed rows to their corresponding row and ratio
+    var_solutions::Dict{String, Float64}  # Mapping of variable names to their solution values from any presolve procedure
+    row_scaling::Vector{Float64}  # Scaling factors for rows (optional, if scaling is applied)
+    col_scaling::Vector{Float64}  # Scaling factors for columns (optional, if scaling is applied)
+    is_infeasible::Bool  # Flag for infeasibility detection
+end
+
 
 end # module
 
