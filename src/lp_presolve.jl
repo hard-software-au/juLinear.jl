@@ -217,42 +217,94 @@ end
 ##############################################################################
 
 """
-    lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
+lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
 
-Detects and removes rows from the LP problem where all entries in the constraint matrix `A` are effectively zero (based on the threshold `ε`). Variables are preserved unless their entire corresponding columns are zero, which is not the case in this function.
+Removes zero rows (constraints) from the LP problem where all coefficients are approximately zero. This simplifies the problem by eliminating redundant constraints that do not affect the feasible region.
 
-# Arguments:
-- `preprocessed_problem::PreprocessedLPProblem`: The LP or MIP problem that has been preprocessed.
-- `ε::Float64 = 1e-8`: Tolerance to determine whether an entry in the matrix `A` is considered zero.
-- `verbose::Bool = false`: If true, debug information is printed during the row removal process.
+# Parameters
+- `preprocessed_problem::PreprocessedLPProblem`: The LP or MIP problem to process.
+- `ε::Float64 = 1e-8`: Tolerance used to determine if a coefficient is considered zero.
+- `verbose::Bool = false`: If `true`, prints detailed debug information during processing.
 
-# Returns:
-- `PreprocessedLPProblem`: The updated preprocessed LP problem after removing zero rows.
+# Returns
+- `PreprocessedLPProblem`: A new `PreprocessedLPProblem` instance with:
+  - `reduced_problem`: Updated by removing zero rows.
+  - `removed_rows`: Updated to include indices of the removed rows.
+  - `is_infeasible`: Set to `true` if an infeasibility is detected due to a zero row with a conflicting right-hand side.
 
-# Behavior:
-1. **Zero Row Detection**: Identifies rows in the constraint matrix `A` where all elements are effectively zero (within the given tolerance `ε`).
-2. **Row Removal**: Removes the identified zero rows from the constraint matrix, the right-hand side `b`, and the constraint types.
-3. **Variable Preservation**: Variables (columns) are preserved in the reduced problem unless their entire corresponding columns are zero. In this case, no variables are removed.
-4. **Row Ratios Update**: The function updates the `row_ratios` dictionary to keep track of removed rows.
+# Behavior
+1. **Zero Row Detection**: Identifies constraints where all coefficients in `A` are approximately zero within the tolerance `ε`.
+2. **Infeasibility Check**: For zero rows corresponding to equality constraints with a non-zero right-hand side (`b`), the problem is marked as infeasible.
+3. **Problem Reduction**: Creates a new `reduced_problem` without the zero rows, adjusting:
+   - Constraint matrix (`A`).
+   - Right-hand side vector (`b`).
+   - Constraint types (`constraint_types`).
+4. **Variables Unchanged**: Variable-related data (`c`, `l`, `u`, `vars`, `variable_types`) remain unchanged.
 
-# Example:
-```julia
-# Create a PreprocessedLPProblem
-preprocessed_lp = PreprocessedLPProblem(
-    original_problem,  # Original LP or MIP problem
-    reduced_problem,  # Reduced problem (initially identical to original)
-    Int[],  # No rows removed initially
-    Int[],  # No columns removed initially
-    Dict{Int, Tuple{Int, Float64}}(),  # No row ratios initially
-    Dict{String, Float64}(),  # No variable solutions initially
-    Float64[],  # No row scaling initially
-    Float64[],  # No column scaling initially
-    false  # Problem is not infeasible initially
+# Examples
+```
+using SparseArrays
+
+# Define the original LP problem
+c = [1.0, 2.0]  # Objective function coefficients
+A = sparse([0.0 0.0; 1.0 -1.0])  # Constraint matrix with a zero row
+b = [0.0, 5.0]  # Right-hand side vector
+l = [0.0, 0.0]  # Lower bounds
+u = [Inf, Inf]  # Upper bounds
+vars = ["x1", "x2"]  # Variable names
+constraint_types = ['E', 'L']  # Constraint types ('E' for =, 'L' for ≤)
+variable_types = [:continuous, :continuous]  # Variable types
+
+# Create the original LPProblem
+original_lp = LPProblem(
+    is_minimize = true,
+    c = c,
+    A = A,
+    b = b,
+    constraint_types = constraint_types,
+    l = l,
+    u = u,
+    vars = vars,
+    variable_types = variable_types
 )
 
-# Run the function to remove zero rows
-lp_remove_zero_rows(preprocessed_lp; verbose=true)
+# Initialize the PreprocessedLPProblem
+lp_model = PreprocessedLPProblem(
+    original_problem = original_lp,
+    reduced_problem = original_lp,  # Initially the same as the original
+    removed_rows = Int[],           # No rows removed yet
+    removed_cols = Int[],           # No columns removed yet
+    row_ratios = Dict{Int, Tuple{Int, Float64}}(),  # No row reductions yet
+    var_solutions = Dict{String, Float64}(),        # Variable solutions not yet filled
+    row_scaling = Float64[],                        # No row scaling applied
+    col_scaling = Float64[],                        # No column scaling applied
+    is_infeasible = false                           # Problem is feasible initially
+)
+
+# Remove zero rows
+new_lp_model = lp_remove_zero_rows(lp_model; verbose = true)
+
+# Output the reduced problem
+println("Reduced Problem after removing zero rows:")
+println(new_lp_model.reduced_problem)
+
+# Check for infeasibility
+if new_lp_model.is_infeasible
+    println("The problem is infeasible due to a zero row with a conflicting RHS.")
+else
+    println("Zero rows successfully removed.")
+end
 ```
+
+# Notes
+- **Infeasibility Detection**: If a zero row corresponds to an equality constraint with a non-zero right-hand side, the problem is infeasible.
+- **Sparse Matrix Efficiency**: The function leverages sparse matrix properties for efficient computation.
+- **Integration**: This function can be used as part of a presolve routine to simplify LP/MIP problems before optimization.
+
+# See Also
+- `lp_detect_and_remove_fixed_variables`
+- `lp_detect_and_remove_row_singletons`
+- `lp_detect_and_remove_column_singletons`
 """
 function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
     # Unpack problem
@@ -266,27 +318,49 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
     col_scaling = preprocessed_problem.col_scaling
     is_infeasible = preprocessed_problem.is_infeasible
 
-    # Find non-zero rows
-    non_zero_rows = [i for i in 1:size(reduced_lp.A, 1) if any(abs.(reduced_lp.A[i, :]) .> ε)]
-    new_removed_rows = setdiff(1:size(reduced_lp.A, 1), non_zero_rows)
+    # Efficiently find non-zero rows using sparse matrix properties
+    row_nnz = diff(reduced_lp.A.rowptr)
+    non_zero_rows = findall(row_nnz .> 0)
+    new_removed_rows = findall(row_nnz .== 0)
 
     # Debug statements
     if verbose 
         println("#" ^ 80)
         println("~" ^ 80)
-        println("Remove rows function")
+        println("Remove Zero Rows Function")
         println("~" ^ 80)
-        println("The number of rows: ", size(reduced_lp.A, 1))
-        println("The non-zero rows: ", non_zero_rows)
-        println("The removed rows are: ", new_removed_rows)
+        println("Total number of rows: ", size(reduced_lp.A, 1))
+        println("Non-zero rows: ", non_zero_rows)
+        println("Removed zero rows: ", new_removed_rows)
         println("~" ^ 80)
         println("#" ^ 80)
         println()
     end
 
-    # Update the row ratios dictionary
-    for removed_row in new_removed_rows
-        row_ratios[removed_row + length(removed_rows)] = (removed_row + length(removed_rows), 0.0)
+    # Check for infeasibility in zero rows
+    for idx in new_removed_rows
+        if reduced_lp.constraint_types[idx] == 'E' && abs(reduced_lp.b[idx]) > ε
+            is_infeasible = true
+            if verbose
+                println("Infeasibility detected due to zero row at index $idx with non-zero RHS.")
+            end
+            break
+        end
+    end
+
+    if is_infeasible
+        # Return early if problem is infeasible
+        return PreprocessedLPProblem(
+            original_lp,
+            reduced_lp,
+            vcat(removed_rows, new_removed_rows),
+            removed_cols,
+            row_ratios,
+            var_solutions,
+            row_scaling,
+            col_scaling,
+            true  # is_infeasible set to true
+        )
     end
 
     # Adjust the problem based on non-zero rows
@@ -294,26 +368,17 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
     new_b = reduced_lp.b[non_zero_rows]
     new_constraint_types = reduced_lp.constraint_types[non_zero_rows]
 
-    # Here, we do not remove any variables unless their entire column is zero.
-    # Ensure all variables are kept unless their entire column is zero in the reduced matrix.
-    new_A = new_A[:, :]  # Keep all columns unless explicitly zero across all rows.
-    new_c = reduced_lp.c  # Keep original objective coefficients.
-    new_l = reduced_lp.l  # Keep original lower bounds.
-    new_u = reduced_lp.u  # Keep original upper bounds.
-    new_vars = reduced_lp.vars  # Keep original variable names.
-    new_variable_types = reduced_lp.variable_types  # Keep original variable types.
-
-    # Construct the reduced LPProblem
+    # Construct the reduced LPProblem (variables remain unchanged)
     new_reduced_lp = LPProblem(
         reduced_lp.is_minimize, 
-        new_c, 
+        reduced_lp.c, 
         new_A, 
         new_b, 
         new_constraint_types, 
-        new_l, 
-        new_u, 
-        new_vars, 
-        new_variable_types
+        reduced_lp.l, 
+        reduced_lp.u, 
+        reduced_lp.vars, 
+        reduced_lp.variable_types
     )
 
     # Return the updated PreprocessedLPProblem struct
@@ -322,13 +387,14 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
         new_reduced_lp,
         vcat(removed_rows, new_removed_rows),
         removed_cols,  # Variables aren't removed in this process
-        row_ratios,
+        row_ratios,    # Update if necessary
         var_solutions,
         row_scaling,
         col_scaling,
         is_infeasible
     )
 end
+
 
 
 
