@@ -1,6 +1,7 @@
 module lp_presolve
 
 using LinearAlgebra
+using SparseArrays
 using DataStructures
 using lp_problem
 
@@ -396,24 +397,108 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
 end
 
 
-
-
 ##############################################################################
 #### lp_remove_row_singletons
 ##############################################################################
 
 """
-    lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
+lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
 
-Removes columns from the constraint matrix `A` of the `PreprocessedLPProblem` that consist only of zeros.
+Identifies and processes row singletons in an LP or MIP problem. A row singleton is a constraint involving only one variable. The function adjusts variable bounds or fixes variables as appropriate, simplifies the problem, and updates the `PreprocessedLPProblem` struct.
 
-# Arguments:
-- `preprocessed_lp`: The `PreprocessedLPProblem` struct containing the original and reduced problem.
-- `ε`: Threshold below which values are considered zero. Defaults to `1e-8`.
-- `verbose`: If `true`, prints debugging information. Defaults to `false`.
+# Parameters
+- `lp_model::PreprocessedLPProblem`: The preprocessed LP or MIP problem before processing row singletons.
+- `ε::Float64 = 1e-8`: Tolerance used to handle numerical precision issues.
+- `verbose::Bool = false`: If `true`, prints detailed debug information during processing.
 
-# Returns:
-A new `PreprocessedLPProblem` with columns removed from the reduced problem.
+# Returns
+- `PreprocessedLPProblem`: A new `PreprocessedLPProblem` instance with:
+  - `reduced_problem`: Updated by processing row singletons.
+  - `removed_rows`: Updated with indices of the removed singleton rows.
+  - `removed_cols`: Updated with indices of variables removed (if any).
+  - `var_solutions`: Updated with values of any variables fixed during processing.
+  - `is_infeasible`: Set to `true` if an infeasibility is detected.
+
+# Behavior
+1. **Row Singleton Detection**: Identifies constraints involving only one variable.
+2. **Processing**:
+   - For **equality constraints ('E')**:
+     - Solves for the variable and fixes its value.
+     - Removes the variable and the constraint from the problem.
+   - For **less-than-or-equal constraints ('L')**:
+     - Adjusts the variable's upper or lower bound depending on the coefficient.
+     - Removes the constraint from the problem.
+   - For **greater-than-or-equal constraints ('G')**:
+     - Adjusts the variable's lower or upper bound depending on the coefficient.
+     - Removes the constraint from the problem.
+3. **Infeasibility Check**: If variable bounds become inconsistent after processing, the problem is marked as infeasible.
+4. **Problem Reduction**: Updates the constraint matrix, right-hand side vector, variable bounds, objective function, and removes processed variables and constraints.
+
+# Examples
+```
+using SparseArrays
+
+# Define the original LP problem
+c = [2.0, 3.0, 1.0]
+A = sparse([
+    1.0  0.0  0.0;  # Singleton row involving x1
+    0.0  1.0  1.0;
+    0.0  0.0  1.0   # Singleton row involving x3
+])
+b = [5.0, 10.0, 3.0]
+l = [0.0, 0.0, 0.0]
+u = [Inf, Inf, Inf]
+vars = ["x1", "x2", "x3"]
+constraint_types = ['E', 'L', 'E']
+variable_types = [:continuous, :continuous, :continuous]
+
+# Create the original LPProblem
+original_lp = LPProblem(
+    is_minimize = true,
+    c = c,
+    A = A,
+    b = b,
+    constraint_types = constraint_types,
+    l = l,
+    u = u,
+    vars = vars,
+    variable_types = variable_types
+)
+
+# Initialize the PreprocessedLPProblem
+lp_model = PreprocessedLPProblem(
+    original_problem = original_lp,
+    reduced_problem = original_lp,  # Initially the same as the original
+    removed_rows = Int[],           # No rows removed yet
+    removed_cols = Int[],           # No columns removed yet
+    row_ratios = Dict{Int, Tuple{Int, Float64}}(),  # No row reductions yet
+    var_solutions = Dict{String, Float64}(),        # Variable solutions not yet filled
+    row_scaling = Float64[],                        # No row scaling applied
+    col_scaling = Float64[],                        # No column scaling applied
+    is_infeasible = false                           # Problem is feasible initially
+)
+
+# Process row singletons
+new_lp_model = lp_remove_row_singletons(lp_model; verbose = true)
+
+# Output the reduced problem
+println("Reduced Problem after processing row singletons:")
+println(new_lp_model.reduced_problem)
+
+# Output fixed variable solutions
+println("Fixed Variable Solutions:")
+println(new_lp_model.var_solutions)
+```
+
+# Notes
+- **Infeasibility Detection**: If variable bounds conflict after processing, the problem is marked as infeasible.
+- **Variable Removal**: Variables fixed during processing are removed from the problem.
+- **Integration**: This function is part of a presolve routine to simplify LP/MIP problems before optimization.
+
+# See Also
+- `lp_detect_and_remove_fixed_variables`
+- `lp_remove_zero_rows`
+- `lp_detect_and_remove_column_singletons`
 """
 function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
     # Unpack problem
@@ -422,52 +507,161 @@ function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1
     removed_rows = lp_model.removed_rows
     removed_cols = lp_model.removed_cols
     row_ratios = lp_model.row_ratios
-    var_solutions = preprocessed_problem.var_solutions
+    var_solutions = lp_model.var_solutions
+    is_infeasible = lp_model.is_infeasible
 
-    # Find row singletons
-    # singleton_rows = [i for i in 1:size(reduced_lp.A, 1) if count(!iszero, reduced_lp.A[i, :]) == 1]
-    singleton_rows = [i for i in 1:size(reduced_lp.A, 1) if count(!iszero, reduced_lp.A[i, :]) == 1 && reduced_lp.b[i] == 0 && reduced_lp.constraint_types[i] != "<="]
-    non_singleton_rows = setdiff(1:size(reduced_lp.A, 1), singleton_rows)
-    # non_singleton_rows = [i for i in 1:size(reduced_lp.A, 1) if count(!iszero, reduced_lp.A[i, :]) > 1]
-    new_removed_rows = setdiff(1:size(reduced_lp.A, 1), non_singleton_rows)
+    # Create copies to modify
+    A = copy(reduced_lp.A)
+    b = copy(reduced_lp.b)
+    c = copy(reduced_lp.c)
+    l = copy(reduced_lp.l)
+    u = copy(reduced_lp.u)
+    vars = copy(reduced_lp.vars)
+    variable_types = copy(reduced_lp.variable_types)
+    constraint_types = copy(reduced_lp.constraint_types)
 
+    # Initialize lists to keep track of removals
+    rows_to_remove = Int[]
+    removed_vars_indices = Int[]
+    singleton_rows = Int[]
 
-    # Debug statements
+    # Identify and process row singletons
+    for row in 1:size(A, 1)
+        # Find non-zero coefficients in the row
+        nz_indices = findnz(A[row, :])[1]
+        if length(nz_indices) == 1
+            push!(singleton_rows, row)
+            var_index = nz_indices[1]
+            coef = A[row, var_index]
+            rhs = b[row]
+            constr_type = constraint_types[row]
+
+            if abs(coef) < ε
+                continue  # Skip if coefficient is effectively zero
+            end
+
+            if constr_type == 'E'
+                # Equality constraint: Fix the variable
+                var_value = rhs / coef
+                l[var_index] = var_value
+                u[var_index] = var_value
+                var_solutions[vars[var_index]] = var_value
+
+                # Remove the variable and constraint from the problem
+                push!(removed_vars_indices, var_index)
+                push!(rows_to_remove, row)
+
+            elseif constr_type == 'L'
+                # Less-than-or-equal constraint: Adjust upper or lower bound
+                new_bound = rhs / coef
+                if coef > 0
+                    u[var_index] = min(u[var_index], new_bound)
+                else
+                    l[var_index] = max(l[var_index], new_bound)
+                end
+                push!(rows_to_remove, row)
+
+            elseif constr_type == 'G'
+                # Greater-than-or-equal constraint: Adjust lower or upper bound
+                new_bound = rhs / coef
+                if coef > 0
+                    l[var_index] = max(l[var_index], new_bound)
+                else
+                    u[var_index] = min(u[var_index], new_bound)
+                end
+                push!(rows_to_remove, row)
+            else
+                continue  # Skip other constraint types
+            end
+
+            # Check for infeasibility
+            if l[var_index] > u[var_index] + ε
+                is_infeasible = true
+                if verbose
+                    println("Infeasibility detected at variable $(vars[var_index]) after processing row singleton at row $row.")
+                end
+                break
+            end
+        end
+    end
+
+    if is_infeasible
+        return PreprocessedLPProblem(
+            original_lp,
+            reduced_lp,
+            vcat(removed_rows, rows_to_remove),
+            vcat(removed_cols, removed_vars_indices),
+            row_ratios,
+            var_solutions,
+            lp_model.row_scaling,
+            lp_model.col_scaling,
+            true
+        )
+    end
+
+    # Remove rows and columns from the problem
+    remaining_rows = setdiff(1:size(A, 1), rows_to_remove)
+    remaining_cols = setdiff(1:size(A, 2), removed_vars_indices)
+
+    # Compute remaining variables before modifying vars
+    remaining_vars = vars[remaining_cols]
+
+    # Verbose output matching previous functions
     if verbose
         println("#" ^ 80)
         println("~" ^ 80)
-        println("Remove row singletons function")
+        println("Row Singleton Removal")
         println("~" ^ 80)
-        println("The number of rows: ", size(reduced_lp.A, 1))
-        println("The row singletons: ", singleton_rows)
-        println("The removed rows are: ", new_removed_rows)
+        println("Total number of constraints: ", size(reduced_lp.A, 1))
+        println("Singleton rows identified: ", singleton_rows)
+        println("Removed rows: ", rows_to_remove)
+        println("Variables fixed (if any): ", [vars[i] for i in removed_vars_indices])
+        println("Variable solutions (var_solutions): ", var_solutions)
+        println("Remaining variables: ", remaining_vars)
+        println("Remaining constraints: ", length(remaining_rows))
         println("~" ^ 80)
         println("#" ^ 80)
         println()
     end
 
-    # Update the row ratios dictionary
-    for removed_row in new_removed_rows
-        row_ratios[removed_row + length(removed_rows)] = (removed_row + length(removed_rows), 0.0)
-    end
+    # Now modify A, b, c, l, u, vars, variable_types, constraint_types
+    A = A[remaining_rows, remaining_cols]
+    b = b[remaining_rows]
+    constraint_types = constraint_types[remaining_rows]
+    c = c[remaining_cols]
+    l = l[remaining_cols]
+    u = u[remaining_cols]
+    vars = vars[remaining_cols]
+    variable_types = variable_types[remaining_cols]
 
-    # Create new LPProblem with non-row singletons
-    new_A = reduced_lp.A[non_singleton_rows, :]
-    new_b = reduced_lp.b[non_singleton_rows]
-    new_constraint_types = reduced_lp.constraint_types[non_singleton_rows]
+    # Construct the new LPProblem
+    new_reduced_lp = LPProblem(
+        reduced_lp.is_minimize,
+        c,
+        A,
+        b,
+        constraint_types,
+        l,
+        u,
+        vars,
+        variable_types
+    )
 
+    # Update removed rows and columns
+    removed_rows = vcat(removed_rows, rows_to_remove)
+    removed_cols = vcat(removed_cols, removed_vars_indices)
 
-    # Construct the reduced LPProblem
-    new_reduced_lp = LPProblem(reduced_lp.is_minimize, reduced_lp.c, new_A, new_b, reduced_lp.l, reduced_lp.u, reduced_lp.vars, new_constraint_types)
-
-    # Return the updated PreprocessedLPProblem struct
+    # Return the updated PreprocessedLPProblem
     return PreprocessedLPProblem(
         original_lp,
         new_reduced_lp,
-        vcat(removed_rows, new_removed_rows),
+        removed_rows,
         removed_cols,
         row_ratios,
-        var_solutions
+        var_solutions,
+        lp_model.row_scaling,
+        lp_model.col_scaling,
+        is_infeasible
     )
 end
 
