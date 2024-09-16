@@ -671,56 +671,235 @@ end
 ##############################################################################
 
 """
-    lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
+    lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
 
-Removes linearly dependent rows from the constraint matrix `A` of the `PreprocessedLPProblem`. Detects and eliminates rows that are linear combinations of other rows.
+Removes variables corresponding to zero columns in the constraint matrix `A` from an LP or MIP problem. Variables that do not appear in any constraints are analyzed and set to values that optimize the objective function or satisfy bounds. The function updates the `PreprocessedLPProblem` accordingly.
 
-# Arguments:
-- `preprocessed_lp`: The `PreprocessedLPProblem` struct containing the original and reduced problem.
-- `ε`: Threshold below which values are considered zero. Defaults to `1e-8`.
-- `verbose`: If `true`, prints debugging information. Defaults to `false`.
+# Parameters
+- `preprocessed_lp::PreprocessedLPProblem`: The preprocessed LP or MIP problem before zero column removal.
+- `ε::Float64=1e-8`: Tolerance used to determine if a coefficient is considered zero.
+- `verbose::Bool=false`: If `true`, prints detailed debug information during processing.
 
-# Returns:
-A new `PreprocessedLPProblem` with linearly dependent rows removed.
+# Returns
+- `PreprocessedLPProblem`: A new `PreprocessedLPProblem` instance with:
+  - `reduced_problem`: Updated by removing zero columns and adjusting variable values.
+  - `removed_cols`: Updated to include indices of the removed columns (variables).
+  - `var_solutions`: Updated with the values of variables corresponding to zero columns.
+  - `is_infeasible`: Set to `true` if an infeasibility is detected due to unbounded variables.
+
+# Behavior
+1. **Zero Column Detection**: Identifies variables (columns) where all coefficients in `A` are approximately zero within the tolerance `ε`.
+2. **Variable Processing**:
+   - For each zero column variable, determines its value based on:
+     - Objective function coefficient (`c[j]`).
+     - Variable bounds (`l[j]` and `u[j]`).
+     - Problem type (minimization or maximization).
+   - Updates `var_solutions` with the variable's value.
+   - Removes the variable from the problem.
+3. **Infeasibility Check**: If a variable can improve the objective unboundedly and is unbounded in that direction, the problem is marked as infeasible.
+4. **Problem Reduction**: Updates the constraint matrix `A`, objective coefficients `c`, variable bounds, and other relevant data structures by removing zero columns.
+
+# Examples
+```
+using SparseArrays
+
+# Define the original LP problem
+c = [1.0, -2.0, 0.0]  # Objective function coefficients
+A = sparse([1.0 2.0 0.0; 0.0 -1.0 0.0])  # Constraint matrix (third column is zero)
+b = [4.0, -1.0]  # Right-hand side
+l = [0.0, 0.0, 0.0]  # Lower bounds
+u = [Inf, Inf, Inf]  # Upper bounds
+vars = ["x1", "x2", "x3"]  # Variable names
+constraint_types = ['L', 'G']  # Constraint types
+variable_types = [:continuous, :continuous, :continuous]  # Variable types
+
+# Create the original LPProblem
+original_lp = LPProblem(
+    is_minimize = true,
+    c = c,
+    A = A,
+    b = b,
+    constraint_types = constraint_types,
+    l = l,
+    u = u,
+    vars = vars,
+    variable_types = variable_types
+)
+
+# Initialize the PreprocessedLPProblem
+preprocessed_lp = PreprocessedLPProblem(
+    original_problem = original_lp,
+    reduced_problem = original_lp,
+    removed_rows = Int[],
+    removed_cols = Int[],
+    row_ratios = Dict{Int, Tuple{Int, Float64}}(),
+    var_solutions = Dict{String, Float64}(),
+    row_scaling = Float64[],
+    col_scaling = Float64[],
+    is_infeasible = false
+)
+
+# Remove zero columns
+new_preprocessed_lp = lp_remove_zero_columns(preprocessed_lp; verbose = true)
+
+# Output the reduced problem
+println("Reduced Problem after removing zero columns:")
+println(new_preprocessed_lp.reduced_problem)
+
+# Output variable solutions
+println("Variable solutions:")
+println(new_preprocessed_lp.var_solutions)
+```
+
+# Notes
+- **Unbounded Variables**: Variables with zero columns and unbounded in the direction of improving the objective function can lead to unboundedness. The problem is marked as infeasible in such cases.
+- **Integration**: This function is typically used as part of a sequence of presolve operations to simplify LP/MIP problems before optimization.
+- **Variable Removal**: Variables corresponding to zero columns are removed from the problem and their values are stored in `var_solutions`.
+
+# See Also
+- `lp_detect_and_remove_fixed_variables`
+- `lp_remove_zero_rows`
+- `lp_remove_row_singletons`
+- `lp_detect_and_remove_column_singletons`
 """
 function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
-    # Find non-zero columns
-    non_zero_columns = [j for j in 1:size(preprocessed_lp.reduced_problem.A, 2) if any(abs.(preprocessed_lp.reduced_problem.A[:, j]) .> ε)]
-    new_removed_columns = setdiff(1:size(preprocessed_lp.reduced_problem.A, 2), non_zero_columns)
+    # Unpack the reduced problem
+    reduced_lp = preprocessed_lp.reduced_problem
+    A = reduced_lp.A
+    c = reduced_lp.c
+    l = reduced_lp.l
+    u = reduced_lp.u
+    vars = reduced_lp.vars
+    variable_types = reduced_lp.variable_types
+    var_solutions = copy(preprocessed_lp.var_solutions)
+    is_minimize = reduced_lp.is_minimize
+    is_infeasible = preprocessed_lp.is_infeasible  # Initialize is_infeasible
 
-    # Debug statements
-    if debug
+    # Efficiently find non-zero columns using sparse matrix properties
+    col_nnz = diff(A.colptr)
+    non_zero_columns = findall(col_nnz .> 0)
+    zero_columns = findall(col_nnz .== 0)
+
+    # Initialize lists for variables to remove and their solutions
+    vars_to_remove = Int[]
+    new_var_solutions = Dict{String, Float64}()
+
+    # Process zero columns
+    for idx in zero_columns
+        var_name = vars[idx]
+        lb = l[idx]
+        ub = u[idx]
+        coef = c[idx]
+
+        # Assume we will remove this variable
+        push!(vars_to_remove, idx)
+
+        # Handle unbounded variables
+        if isinf(lb) || isinf(ub)
+            if is_minimize
+                if (coef > 0 && isinf(lb)) || (coef < 0 && isinf(ub))
+                    # Objective can decrease unboundedly
+                    is_infeasible = true
+                    break
+                else
+                    # Set variable to bound that optimizes objective
+                    var_value = (coef ≥ 0) ? lb : ub
+                end
+            else
+                # Maximization problem
+                if (coef > 0 && isinf(ub)) || (coef < 0 && isinf(lb))
+                    # Objective can increase unboundedly
+                    is_infeasible = true
+                    break
+                else
+                    # Set variable to bound that optimizes objective
+                    var_value = (coef ≥ 0) ? ub : lb
+                end
+            end
+        else
+            # Variable is bounded
+            # Set variable to bound that optimizes objective
+            if is_minimize
+                var_value = (coef ≥ 0) ? lb : ub
+            else
+                var_value = (coef ≥ 0) ? ub : lb
+            end
+        end
+
+        # Record variable value if not infeasible
+        if !is_infeasible
+            new_var_solutions[var_name] = var_value
+        end
+    end
+
+    if verbose
         println("#" ^ 80)
         println("~" ^ 80)
-        println("Remove columns function")
+        println("Zero Column Removal")
         println("~" ^ 80)
-        println("The number of columns: ", size(preprocessed_lp.reduced_problem.A, 2))
-        println("The non-zero columns: ", non_zero_columns)
-        println("The removed columns are: ", new_removed_columns)
+        println("Total number of variables: ", length(vars))
+        println("Zero columns identified: ", [vars[i] for i in zero_columns])
+        println("Variables removed: ", [vars[i] for i in vars_to_remove])
+        if is_infeasible
+            println("Infeasibility detected during zero column removal.")
+        else
+            println("Variables fixed (if any): ", keys(new_var_solutions))
+            println("Variable solutions (var_solutions): ", new_var_solutions)
+            println("Remaining variables: ", vars[setdiff(1:end, vars_to_remove)])
+        end
         println("~" ^ 80)
         println("#" ^ 80)
         println()
     end
 
-    # Create new LPProblem without zero columns
-    new_c = preprocessed_lp.reduced_problem.c[non_zero_columns]
-    new_A = preprocessed_lp.reduced_problem.A[:, non_zero_columns]
-    new_l = preprocessed_lp.reduced_problem.l[non_zero_columns]
-    new_u = preprocessed_lp.reduced_problem.u[non_zero_columns]
-    new_vars = preprocessed_lp.reduced_problem.vars[non_zero_columns]
-    var_solutions = preprocessed_problem.var_solutions
+    if is_infeasible
+        # Return without modifying the problem further
+        return PreprocessedLPProblem(
+            preprocessed_lp.original_problem,
+            reduced_lp,
+            preprocessed_lp.removed_rows,
+            vcat(preprocessed_lp.removed_cols, vars_to_remove),
+            preprocessed_lp.row_ratios,
+            var_solutions,  # Do not merge new_var_solutions as they may be invalid
+            preprocessed_lp.row_scaling,
+            preprocessed_lp.col_scaling,
+            is_infeasible
+        )
+    end
 
-    # Construct the reduced LPProblem
-    new_reduced_lp = LPProblem(preprocessed_lp.reduced_problem.is_minimize, new_c, new_A, preprocessed_lp.reduced_problem.b, new_l, new_u, new_vars, preprocessed_lp.reduced_problem.constraint_types)
+    # Update variables by removing zero columns
+    remaining_vars_indices = setdiff(1:length(vars), vars_to_remove)
+    new_c = c[remaining_vars_indices]
+    new_A = A[:, remaining_vars_indices]
+    new_l = l[remaining_vars_indices]
+    new_u = u[remaining_vars_indices]
+    new_vars = vars[remaining_vars_indices]
+    new_variable_types = variable_types[remaining_vars_indices]
+
+    # Construct the new LPProblem
+    new_reduced_lp = LPProblem(
+        is_minimize,
+        new_c,
+        new_A,
+        reduced_lp.b,
+        reduced_lp.constraint_types,
+        new_l,
+        new_u,
+        new_vars,
+        new_variable_types
+    )
 
     # Return the updated PreprocessedLPProblem struct
     return PreprocessedLPProblem(
         preprocessed_lp.original_problem,
         new_reduced_lp,
         preprocessed_lp.removed_rows,
-        new_removed_columns,
+        vcat(preprocessed_lp.removed_cols, vars_to_remove),
         preprocessed_lp.row_ratios,
-        var_solutions
+        merge(var_solutions, new_var_solutions),
+        preprocessed_lp.row_scaling,
+        preprocessed_lp.col_scaling,
+        is_infeasible
     )
 end
 
