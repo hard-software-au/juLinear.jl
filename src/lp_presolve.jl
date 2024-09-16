@@ -134,17 +134,42 @@ end
 ##############################################################################
 
 """
-    lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
+    lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
 
-Removes rows from the constraint matrix `A` of the `PreprocessedLPProblem` that consist only of zeros. 
+Detects and removes rows from the LP problem where all entries in the constraint matrix `A` are effectively zero (based on the threshold `ε`). Variables are preserved unless their entire corresponding columns are zero, which is not the case in this function.
 
 # Arguments:
-- `preprocessed_problem`: The `PreprocessedLPProblem` struct that contains the original and reduced problem.
-- `ε`: Threshold below which values are considered zero. Defaults to `1e-8`.
-- `verbose`: If `true`, prints debugging information. Defaults to `false`.
+- `preprocessed_problem::PreprocessedLPProblem`: The LP or MIP problem that has been preprocessed.
+- `ε::Float64 = 1e-8`: Tolerance to determine whether an entry in the matrix `A` is considered zero.
+- `verbose::Bool = false`: If true, debug information is printed during the row removal process.
 
 # Returns:
-A new `PreprocessedLPProblem` with rows removed from the reduced problem.
+- `PreprocessedLPProblem`: The updated preprocessed LP problem after removing zero rows.
+
+# Behavior:
+1. **Zero Row Detection**: Identifies rows in the constraint matrix `A` where all elements are effectively zero (within the given tolerance `ε`).
+2. **Row Removal**: Removes the identified zero rows from the constraint matrix, the right-hand side `b`, and the constraint types.
+3. **Variable Preservation**: Variables (columns) are preserved in the reduced problem unless their entire corresponding columns are zero. In this case, no variables are removed.
+4. **Row Ratios Update**: The function updates the `row_ratios` dictionary to keep track of removed rows.
+
+# Example:
+```julia
+# Create a PreprocessedLPProblem
+preprocessed_lp = PreprocessedLPProblem(
+    original_problem,  # Original LP or MIP problem
+    reduced_problem,  # Reduced problem (initially identical to original)
+    Int[],  # No rows removed initially
+    Int[],  # No columns removed initially
+    Dict{Int, Tuple{Int, Float64}}(),  # No row ratios initially
+    Dict{String, Float64}(),  # No variable solutions initially
+    Float64[],  # No row scaling initially
+    Float64[],  # No column scaling initially
+    false  # Problem is not infeasible initially
+)
+
+# Run the function to remove zero rows
+lp_remove_zero_rows(preprocessed_lp; verbose=true)
+```
 """
 function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
     # Unpack problem
@@ -154,20 +179,23 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
     removed_cols = preprocessed_problem.removed_cols
     row_ratios = preprocessed_problem.row_ratios
     var_solutions = preprocessed_problem.var_solutions
+    row_scaling = preprocessed_problem.row_scaling
+    col_scaling = preprocessed_problem.col_scaling
+    is_infeasible = preprocessed_problem.is_infeasible
 
     # Find non-zero rows
     non_zero_rows = [i for i in 1:size(reduced_lp.A, 1) if any(abs.(reduced_lp.A[i, :]) .> ε)]
     new_removed_rows = setdiff(1:size(reduced_lp.A, 1), non_zero_rows)
 
-    # debug statements
+    # Debug statements
     if verbose 
         println("#" ^ 80)
         println("~" ^ 80)
         println("Remove rows function")
         println("~" ^ 80)
-        println("The number of rows: ",size(reduced_lp.A, 1))
+        println("The number of rows: ", size(reduced_lp.A, 1))
         println("The non-zero rows: ", non_zero_rows)
-        println("The removed rows are: ",new_removed_rows)
+        println("The removed rows are: ", new_removed_rows)
         println("~" ^ 80)
         println("#" ^ 80)
         println()
@@ -178,27 +206,47 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
         row_ratios[removed_row + length(removed_rows)] = (removed_row + length(removed_rows), 0.0)
     end
 
-    # Create new LPProblem with non-zero rows
+    # Adjust the problem based on non-zero rows
     new_A = reduced_lp.A[non_zero_rows, :]
     new_b = reduced_lp.b[non_zero_rows]
     new_constraint_types = reduced_lp.constraint_types[non_zero_rows]
 
+    # Here, we do not remove any variables unless their entire column is zero.
+    # Ensure all variables are kept unless their entire column is zero in the reduced matrix.
+    new_A = new_A[:, :]  # Keep all columns unless explicitly zero across all rows.
+    new_c = reduced_lp.c  # Keep original objective coefficients.
+    new_l = reduced_lp.l  # Keep original lower bounds.
+    new_u = reduced_lp.u  # Keep original upper bounds.
+    new_vars = reduced_lp.vars  # Keep original variable names.
+    new_variable_types = reduced_lp.variable_types  # Keep original variable types.
+
     # Construct the reduced LPProblem
-    new_reduced_lp = LPProblem(reduced_lp.is_minimize, 
-            reduced_lp.c, new_A, new_b, 
-            reduced_lp.l, reduced_lp.u, reduced_lp.vars, 
-            new_constraint_types)
+    new_reduced_lp = LPProblem(
+        reduced_lp.is_minimize, 
+        new_c, 
+        new_A, 
+        new_b, 
+        new_constraint_types, 
+        new_l, 
+        new_u, 
+        new_vars, 
+        new_variable_types
+    )
 
     # Return the updated PreprocessedLPProblem struct
     return PreprocessedLPProblem(
         original_lp,
         new_reduced_lp,
         vcat(removed_rows, new_removed_rows),
-        removed_cols,
+        removed_cols,  # Variables aren't removed in this process
         row_ratios,
-        var_solutions
+        var_solutions,
+        row_scaling,
+        col_scaling,
+        is_infeasible
     )
 end
+
 
 
 ##############################################################################
