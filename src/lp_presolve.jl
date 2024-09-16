@@ -1,5 +1,6 @@
 module lp_presolve
 
+using LinearAlgebra
 using DataStructures
 using lp_problem
 
@@ -11,39 +12,94 @@ export lp_detect_and_remove_fixed_variables, presolve_lp, lp_remove_zero_rows, l
 ##############################################################################
 
 """
-    lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
+lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
 
-Detects and removes variables from the LP problem where the lower and upper bounds are equal (fixed variables). 
-These fixed variables are removed from the reduced problem, and their values are stored for postsolve.
+Detects and removes fixed variables from an LP or MIP problem within a presolve module. A variable is considered fixed if its lower and upper bounds are approximately equal within a specified tolerance. The function removes these variables from the reduced problem and stores their values for the postsolve phase.
 
-# Arguments:
+# Parameters
 - `lp_model::PreprocessedLPProblem`: The preprocessed LP or MIP problem before fixed variable removal.
-- `ε::Float64 = 1e-8`: Tolerance for determining if a variable is fixed (i.e., when `|l[i] - u[i]| < ε`).
-- `verbose::Bool = false`: If true, debug information is printed during the process.
+- `ε::Float64 = 1e-8`: Tolerance used to determine if a variable is fixed (i.e., when `|l[i] - u[i]| < ε`).
+- `verbose::Bool = false`: If `true`, prints detailed debug information during processing.
 
-# Returns:
-- `PreprocessedLPProblem`: A new preprocessed LP or MIP problem with the fixed variables removed and stored.
+# Returns
+- `PreprocessedLPProblem`: A new `PreprocessedLPProblem` instance with:
+  - `reduced_problem`: Updated by removing fixed variables and adjusting related data structures.
+  - `var_solutions`: Updated with the fixed variable values for the postsolve phase.
+  - `removed_cols`: Updated to include indices of the removed (fixed) variables.
+  - Other fields (`removed_rows`, `row_ratios`, `row_scaling`, `col_scaling`, `is_infeasible`) remain unchanged unless affected by this operation.
 
-# Behavior:
-1. **Fixed Variables**: Variables where the lower bound (`l[i]`) is approximately equal to the upper bound (`u[i]`) are considered fixed and removed from the problem.
-2. **Variable Solutions**: The fixed variable values are stored in the `var_solutions` dictionary for postsolve.
-3. **Reduced Problem**: The reduced problem is created with the fixed variables removed, adjusting the objective function, constraint matrix, bounds, variable names, and variable types.
-4. **Row and Column Adjustments**: Contributions of the fixed variables are subtracted from the right-hand side of the constraints.
+# Behavior
+1. **Fixed Variable Detection**: Identifies variables where `|l[i] - u[i]| < ε` and considers them fixed.
+2. **Variable Solutions Storage**: Stores the values of fixed variables in `var_solutions`.
+3. **Problem Reduction**: Creates a new `reduced_problem` without the fixed variables, adjusting:
+   - Objective function coefficients (`c`).
+   - Constraint matrix (`A`).
+   - Right-hand side vector (`b`).
+   - Variable bounds (`l` and `u`).
+   - Variable names (`vars`) and types (`variable_types`).
+4. **Constraint Adjustment**: Subtracts the contributions of fixed variables from the right-hand side of constraints.
 
-# Example:
-```julia
-lp_model = PreprocessedLPProblem(
-    original_problem = original_lp,  # Original problem before preprocessing
-    reduced_problem = reduced_lp,    # Reduced problem after preprocessing
-    removed_rows = [],               # No rows removed yet
-    removed_cols = [],               # No columns removed yet
-    row_ratios = Dict(),             # No row reductions
-    var_solutions = Dict()           # Variable solutions not yet filled
+# Examples
+```
+using SparseArrays
+
+# Define the original LP problem
+c = [1.0, 2.0, 4.0]  # Objective function coefficients
+A = sparse([1.0 -3.0 0.0; 2.0 1.0 -5.0])  # Constraint matrix
+b = [10.0, 15.0]  # Right-hand side vector
+l = [12.0, 0.0, 2.0]  # Lower bounds (x1 and x3 are fixed)
+u = [12.0, 1.0, 2.0]  # Upper bounds
+vars = ["x1", "x2", "x3"]  # Variable names
+constraint_types = ['L', 'L']  # Constraint types ('L' for ≤)
+variable_types = [:continuous, :continuous, :continuous]  # Variable types
+
+# Create the original LPProblem
+original_lp = LPProblem(
+    is_minimize = false,
+    c = c,
+    A = A,
+    b = b,
+    constraint_types = constraint_types,
+    l = l,
+    u = u,
+    vars = vars,
+    variable_types = variable_types
 )
 
-# Call the function to detect and remove fixed variables
-lp_detect_and_remove_fixed_variables(lp_model; verbose=true)
+# Initialize the PreprocessedLPProblem
+lp_model = PreprocessedLPProblem(
+    original_problem = original_lp,
+    reduced_problem = original_lp,  # Initially the same as the original
+    removed_rows = Int[],           # No rows removed yet
+    removed_cols = Int[],           # No columns removed yet
+    row_ratios = Dict{Int, Tuple{Int, Float64}}(),  # No row reductions yet
+    var_solutions = Dict{String, Float64}(),        # Variable solutions not yet filled
+    row_scaling = Float64[],                        # No row scaling applied
+    col_scaling = Float64[],                        # No column scaling applied
+    is_infeasible = false                           # Problem is feasible initially
+)
+
+# Detect and remove fixed variables
+new_lp_model = lp_detect_and_remove_fixed_variables(lp_model; verbose = true)
+
+# Output the reduced problem
+println("Reduced Problem after fixed variable removal:")
+println(new_lp_model.reduced_problem)
+
+# Output the fixed variable solutions
+println("Fixed Variable Solutions:")
+println(new_lp_model.var_solutions)
 ```
+
+# Notes
+- **In-Place Modification**: This function does not modify `lp_model` in place; it returns a new instance with updated fields.
+- **Infeasibility Check**: If removing fixed variables leads to an infeasible problem, the `is_infeasible` flag is set to `true`.
+- **Integration**: This function is typically used as part of a sequence of presolve operations to simplify LP/MIP problems before optimization.
+
+# See Also
+- `lp_detect_and_remove_row_singletons`
+- `lp_detect_and_remove_column_singletons`
+- `lp_bound_tightening`
 """
 function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
     # Unpack the original and reduced problems
@@ -59,7 +115,7 @@ function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; �
 
     # Detect fixed variables (where l == u)
     fixed_vars = [i for i in 1:length(reduced_lp.vars) if abs(reduced_lp.l[i] - reduced_lp.u[i]) < ε]
-    new_removed_cols = setdiff(1:length(reduced_lp.vars), fixed_vars)
+    remaining_vars_indices = setdiff(1:length(reduced_lp.vars), fixed_vars)
 
     # Store the fixed variable names and their solved values in var_solutions
     for i in fixed_vars
@@ -74,8 +130,8 @@ function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; �
         println("~" ^ 80)
         println("Total number of variables: ", length(reduced_lp.vars))
         println("Fixed variables: ", fixed_vars)
-        println("Non-fixed variables: ", new_removed_cols)
-        println("The objective coefficients after removal: ", reduced_lp.c[new_removed_cols])
+        println("Remaining variables: ", remaining_vars_indices)
+        println("The objective coefficients after removal: ", reduced_lp.c[remaining_vars_indices])
         println("Fixed variable values (var_solutions): ", var_solutions)
         println("~" ^ 80)
         println("#" ^ 80)
@@ -92,13 +148,40 @@ function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; �
     new_b = reduced_lp.b .- contribution  # Subtract the contribution from b
 
     # Create new LPProblem without fixed variables
-    new_A = reduced_lp.A[:, new_removed_cols]
-    new_c = reduced_lp.c[new_removed_cols]
-    new_l = reduced_lp.l[new_removed_cols]
-    new_u = reduced_lp.u[new_removed_cols]
-    new_vars = reduced_lp.vars[new_removed_cols]
+    new_A = reduced_lp.A[:, remaining_vars_indices]
+    new_c = reduced_lp.c[remaining_vars_indices]
+    new_l = reduced_lp.l[remaining_vars_indices]
+    new_u = reduced_lp.u[remaining_vars_indices]
+    new_vars = reduced_lp.vars[remaining_vars_indices]
     new_constraint_types = reduced_lp.constraint_types
-    new_variable_types = reduced_lp.variable_types[new_removed_cols]  # Ensure variable types are adjusted too
+    new_variable_types = reduced_lp.variable_types[remaining_vars_indices]  # Ensure variable types are adjusted too
+
+    # Check for infeasibility after adjusting constraints
+    is_infeasible = false
+    for i in 1:length(new_b)
+        if new_constraint_types[i] == 'E' && norm(new_A[i, :], Inf) < ε
+            if abs(new_b[i]) > ε
+                is_infeasible = true
+                if verbose
+                    println("Infeasibility detected in constraint $i after removing fixed variables.")
+                end
+                break
+            end
+        end
+    end
+
+    # Remove zero rows if any
+    zero_row_indices = [i for i in 1:size(new_A, 1) if norm(new_A[i, :], Inf) < ε]
+    if !isempty(zero_row_indices)
+        if verbose
+            println("Removing zero rows: ", zero_row_indices)
+        end
+        new_A = new_A[setdiff(1:end, zero_row_indices), :]
+        new_b = new_b[setdiff(1:end, zero_row_indices)]
+        new_constraint_types = new_constraint_types[setdiff(1:end, zero_row_indices)]
+        # Update removed_rows
+        removed_rows = vcat(removed_rows, zero_row_indices)
+    end
 
     # Create the reduced LP problem
     new_reduced_lp = LPProblem(
