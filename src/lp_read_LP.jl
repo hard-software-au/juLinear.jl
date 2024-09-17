@@ -6,7 +6,7 @@ using DataStructures  # For OrderedDict if needed
 
 using lp_problem
 
-export read_lp
+export read_lp, write_lp
 
 
 """
@@ -316,6 +316,132 @@ function read_lp(filename::String)::LPProblem
         vars,
         variable_types_vec
     )
+end
+
+##########################################################################
+## Write LP fields
+##########################################################################
+
+"""
+write_lp(filename::String, problem::LPProblem)
+
+Writes a linear programming (LP) problem to a file in the LP format, given an `LPProblem` struct.
+
+# Arguments:
+- `filename::String`: The name or path of the LP file to write.
+- `problem::LPProblem`: The linear programming problem to write. It contains fields for objective function, constraints, bounds, and variable types.
+
+# Writes:
+- An LP file formatted with the following sections:
+  1. **Objective**: The objective function (either "Maximize" or "Minimize").
+  2. **Subject To**: The constraints on the variables, with appropriate relations (`<=`, `>=`, or `=`).
+  3. **Bounds**: The bounds for each variable, with "free" indicating no bounds.
+  4. **Binary and General**: Specifies binary and integer variables, if any.
+  5. **End**: Marks the end of the LP file.
+
+# Example:
+```julia
+lp = LPProblem(is_minimize, c, A_sparse, b, constraint_types, l, u, vars, variable_types_vec)
+write_lp("output.lp", lp)
+```
+# Notes 
+- The objective function coefficents are written in the standard LP format with signs and terms properly spaced.
+- Contraints are written based on the contraint matrix and right-hand side vector.
+- Bounds are written based on the contraint matrix and right-hand side vector.
+- If the problem contains binary of integer varibles, they are listed under the apporapiate sections.
+"""
+function write_lp(filename::String, problem::LPProblem)
+    open(filename, "w") do io
+        # Write Objective
+        if problem.is_minimize
+            println(io, "Minimize")
+        else
+            println(io, "Maximize")
+        end
+
+        # Write the objective function
+        print(io, " obj: ")
+        terms = []
+        for (i, coeff) in enumerate(problem.c)
+            var = problem.vars[i]
+            if coeff != 0.0
+                if coeff == 1.0
+                    push!(terms, "$var")
+                elseif coeff == -1.0
+                    push!(terms, "- $var")
+                else
+                    sign = coeff > 0 ? "+" : "-"
+                    push!(terms, "$sign $(abs(coeff)) $var")
+                end
+            end
+        end
+        println(io, join(terms, " + "))
+
+        # Write Constraints
+        println(io, "Subject To")
+        for i in 1:length(problem.b)
+            terms = []
+            for (j, coeff) in zip(findnz(problem.A)[2], findnz(problem.A)[3])
+                if coeff != 0.0 && findnz(problem.A)[1][j] == i
+                    var = problem.vars[j]
+                    if coeff == 1.0
+                        push!(terms, "$var")
+                    elseif coeff == -1.0
+                        push!(terms, "- $var")
+                    else
+                        sign = coeff > 0 ? "+" : "-"
+                        push!(terms, "$sign $(abs(coeff)) $var")
+                    end
+                end
+            end
+
+            # Write the constraint type
+            relation = problem.constraint_types[i] == 'L' ? "<=" : (problem.constraint_types[i] == 'G' ? ">=" : "=")
+            println(io, " c$i: ", join(terms, " "), " $relation $(problem.b[i])")
+        end
+
+        # Write Bounds
+        println(io, "Bounds")
+        for i in 1:length(problem.vars)
+            var = problem.vars[i]
+            lower = problem.l[i]
+            upper = problem.u[i]
+
+            if lower == upper
+                println(io, " $lower <= $var <= $upper")
+            elseif lower != -Inf && upper != Inf
+                println(io, " $lower <= $var <= $upper")
+            elseif lower != -Inf
+                println(io, " $var >= $lower")
+            elseif upper != Inf
+                println(io, " $var <= $upper")
+            else
+                println(io, " $var free")
+            end
+        end
+
+        # Write Binary and Integer variables
+        if any(problem.variable_types .== :Binary)
+            println(io, "Binary")
+            for (i, var_type) in enumerate(problem.variable_types)
+                if var_type == :Binary
+                    println(io, " $(problem.vars[i])")
+                end
+            end
+        end
+
+        if any(problem.variable_types .== :Integer)
+            println(io, "General")
+            for (i, var_type) in enumerate(problem.variable_types)
+                if var_type == :Integer
+                    println(io, " $(problem.vars[i])")
+                end
+            end
+        end
+
+        # End the LP file
+        println(io, "End")
+    end
 end
 
 
