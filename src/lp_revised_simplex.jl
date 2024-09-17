@@ -10,27 +10,56 @@ using lp_standard_form_converter
 export revised_simplex
 
 """
-    revised_simplex(pp::PreprocessedLPProblem) -> (solution::Dict{String, Float64}, optimal_value::Float64)
+    revised_simplex(pp::PreprocessedLPProblem; verbose::Bool=false) -> (solution::Dict{String, Float64}, optimal_value::Float64)
 
-Solves a linear programming (LP) problem using the revised simplex method. It uses the reduced problem from
-the `PreprocessedLPProblem` struct and updates the original solution based on the preprocessing steps.
+Solves a linear programming (LP) problem using the revised simplex method. This method works with the reduced problem 
+from the `PreprocessedLPProblem` struct and updates the original solution based on the preprocessing steps.
 
-# Arguments
+### Arguments
 - `pp::PreprocessedLPProblem`: A `PreprocessedLPProblem` struct that contains the reduced LP problem, along with
-  information about removed rows and columns and any variable solutions from preprocessing.
+  information about removed rows and columns, any variable solutions from preprocessing, and flags for infeasibility.
+- `verbose::Bool=false`: Optional flag to enable detailed output during each iteration of the simplex process. 
+    - If `true`, prints step-by-step details of each iteration, including:
+        - Basic solution at each iteration.
+        - Dual variables and reduced costs.
+        - Entering and leaving variables for the basis.
+        - Updates to the basis and non-basic variables.
+        - Final optimal solution and objective value.
 
-# Returns
+### Returns
 - `solution::Dict{String, Float64}`: The solution as a dictionary mapping variable names to their solution values.
-- `optimal_value::Float64`: The optimal value of the objective function.
+- `optimal_value::Float64`: The optimal value of the objective function, adjusted based on whether the original problem 
+  was a maximization or minimization.
 
-# Raises
-- Throws an error if `is_infeasible == true`.
+### Raises
+- Throws an error if `pp.is_infeasible == true`, indicating that the problem has been flagged as infeasible during preprocessing.
+- Throws an error if the problem is unbounded or if no optimal solution is found within the maximum number of iterations.
 
-# Method Overview
-1. Converts the reduced LP problem to standard form (minimization, equality constraints).
-2. Initializes the basis using slack variables.
-3. Iteratively computes the basic solution, reduced costs, and adjusts the basis.
-4. If the solution is optimal, maps the results back to the original variables.
+### Method Overview
+1. **Convert to Standard Form**: 
+   - Converts the reduced LP problem to standard form, ensuring minimization and equality constraints.
+   - Slack and surplus variables are added as needed.
+   
+2. **Initialization**: 
+   - Initializes the basis with the slack variables and sets up the LU factorization for solving the system.
+   
+3. **Iteration Process**:
+   - Computes the basic solution by solving the system of equations.
+   - Calculates reduced costs and identifies the entering and leaving variables based on the direction of improvement.
+   - Adjusts the basis and continues iterating until an optimal solution is found, or the problem is determined to be unbounded.
+
+4. **Optimal Solution and Mapping**:
+   - Once the optimal solution is found, the result is mapped back to the original variable names.
+   - If any variables were pre-solved during preprocessing, their solutions are included.
+   - The final objective value is adjusted based on whether the original problem was a maximization or minimization.
+
+### Verbose Output:
+If `verbose=true`, the function will print:
+1. Iteration details (basic solution, reduced costs, dual variables).
+2. Information about entering and leaving variables at each step.
+3. Updates to the basis and non-basic variables after each iteration.
+4. The final solution and the optimal objective value.
+
 """
 function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool = false)
     if verbose
