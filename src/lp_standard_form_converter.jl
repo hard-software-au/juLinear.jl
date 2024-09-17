@@ -7,7 +7,7 @@ using lp_problem
 export convert_to_standard_form
 
 """
-    convert_to_standard_form(lp::LPProblem) -> LPProblem
+    convert_to_standard_form(lp::LPProblem; verbose::Bool=false) -> LPProblem
 
 Convert a general linear programming (LP) problem into standard form.
 
@@ -22,6 +22,12 @@ In the standard form of an LP problem:
     - This problem can be a maximization or minimization problem.
     - Constraints can be inequalities (`≤`, `≥`) or equalities (`=`).
     - Variables can have bounds (upper and lower), including negative lower bounds.
+- `verbose::Bool=false`: Optional flag to enable detailed output during the conversion process. 
+    - If `true`, prints step-by-step information about the conversion, including:
+        - Initial problem details.
+        - Conversion of maximization to minimization (if applicable).
+        - Transformation of inequalities into equalities.
+        - Final problem details in standard form.
 
 ### Returns:
 - A new `LPProblem` in standard form:
@@ -43,6 +49,13 @@ In the standard form of an LP problem:
    - Variables with negative lower bounds are shifted to ensure they are non-negative in the standard form.
    - Slack and surplus variables are introduced and added to the constraint matrix.
 
+### Verbose Output:
+If `verbose=true`, the function will print:
+1. Initial problem details (objective function, constraints matrix, right-hand side, and constraint types).
+2. Information on the conversion of a maximization problem to minimization (if applicable).
+3. Details about the introduction of slack and surplus variables for each inequality constraint.
+4. The final problem representation in standard form, including the new objective function, updated constraint matrix, and right-hand side.
+
 ### Example:
 ```julia
 # Original problem with 2 variables and 3 constraints
@@ -63,8 +76,15 @@ standard_lp = convert_to_standard_form(lp)
 ```
 In the example, the original mazimization problem is converted to a minimization problem, whith slack varibles for each ≤ contraint to convert the problem into standard form.
 """
-function convert_to_standard_form(lp::LPProblem)::LPProblem
-    # Access struct fields directly
+function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProblem
+    if verbose
+        println()
+        println("#" ^ 80)
+        println("~" ^ 80)
+        println("convert_to_standard_form")
+        println("~" ^ 80)
+    end
+
     is_minimize = lp.is_minimize
     c = lp.c
     A = lp.A
@@ -82,6 +102,14 @@ function convert_to_standard_form(lp::LPProblem)::LPProblem
     new_b = copy(b)
     new_constraint_types = copy(constraint_types)
     slack_var_count = 0
+
+    if verbose
+        println("Initial problem details:")
+        println("Objective function: ", c)
+        println("Constraints matrix (A): ", A)
+        println("Right-hand side (b): ", b)
+        println("Constraint types: ", constraint_types)
+    end
 
     # Handle less-than-or-equal-to (L) constraints by adding slack variables
     for i in 1:m
@@ -101,15 +129,31 @@ function convert_to_standard_form(lp::LPProblem)::LPProblem
     A_with_slack = hcat(A, new_A_rows)
     
     # Adjust the objective function to account for slack variables (with coefficient 0)
-    new_c = vcat(c, zeros(slack_var_count))  # Add zeros for slack variables
+    new_c = vcat(c, zeros(slack_var_count))
     
-    # Convert maximization to minimization by negating the objective coefficients
+    # If the original problem was a maximization, negate the objective coefficients
     if !is_minimize
         new_c = -new_c
+        if verbose
+            println("~" ^ 80)
+            println("Maximization converted to minimization:")
+            println("New objective: ", new_c)
+        end
     end
     
     # Convert all constraints to equalities
     new_constraint_types .= 'E'
+
+    if verbose
+        println("~" ^ 80)
+        println("Final problem in standard form:")
+        println("Objective function: ", new_c)
+        println("Constraints matrix (A): ", A_with_slack)
+        println("Right-hand side (b): ", new_b)
+        println("~" ^ 80)
+        println("#" ^ 80)
+        println()
+    end
 
     # Return the modified LP problem in standard form
     return LPProblem(
@@ -118,12 +162,13 @@ function convert_to_standard_form(lp::LPProblem)::LPProblem
         A_with_slack,  # Updated constraint matrix with slack variables
         new_b,  # Right-hand side vector remains the same
         new_constraint_types,  # All constraints are now equalities
-        zeros(n + slack_var_count),  # Lower bounds for original variables and slack variables
-        fill(Inf, n + slack_var_count),  # Upper bounds for original variables and slack variables
+        l,  # Lower bounds for original variables
+        fill(Inf, n + slack_var_count),  # Upper bounds (infinity for all variables)
         vars,  # Variable names including slack variables
-        variable_types  # Variable types including slack variables
+        variable_types  # Variable types
     )
 end
+
 
 
 end # module
