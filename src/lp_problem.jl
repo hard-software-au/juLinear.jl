@@ -51,7 +51,7 @@ struct LPProblem
     l::Vector{Float64}            # Lower bounds (l in l ≤ X)
     u::Vector{Float64}            # Upper bounds (u in X ≤ u)
     vars::Vector{String}          # Variable names (X_B, X_N)
-    variable_types::Vector{Symbol}  # Variable types (:Continuous, :Integer, :Binary)
+    variable_types::Vector{Symbol}  # Variable types: (:Continuous, :Integer, :Binary, :SemiContinuous, :SemiInteger)
 end
 
 
