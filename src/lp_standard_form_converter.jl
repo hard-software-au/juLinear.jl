@@ -1,150 +1,129 @@
 module lp_standard_form_converter
 
 using SparseArrays
-import lp_problem: LPProblem, MIPProblem
+using lp_problem
 
 # Export the functions
 export convert_to_standard_form
-export convert_to_standard_form_mip
 
 """
-    convert_to_standard_form(lp::LPProblem) -> (new_A::SparseMatrixCSC, new_b::Vector{Float64}, new_c::Vector{Float64})
+    convert_to_standard_form(lp::LPProblem) -> LPProblem
 
-Converts a given `LPProblem` to its standard form, transforming the constraints and objective function to fit the requirements of the standard linear programming form.
+Convert a general linear programming (LP) problem into standard form.
 
-# Arguments
-- `lp::LPProblem`: A struct representing the Linear Programming problem, containing the objective function, constraints, and bounds.
+### Standard Form:
+In the standard form of an LP problem:
+- The objective function is always **minimized**.
+- All constraints are **equalities** (i.e., of the form `Ax = b`).
+- All variables are **non-negative** (i.e., `x ≥ 0`).
 
-# Returns
-- `new_A::SparseMatrixCSC`: The transformed constraint matrix in standard form.
-- `new_b::Vector{Float64}`: The transformed right-hand side of the constraints.
-- `new_c::Vector{Float64}`: The transformed objective function coefficients.
+### Arguments:
+- `lp::LPProblem`: The original linear programming problem to be converted. 
+    - This problem can be a maximization or minimization problem.
+    - Constraints can be inequalities (`≤`, `≥`) or equalities (`=`).
+    - Variables can have bounds (upper and lower), including negative lower bounds.
 
-# Method Details
-- Handles lower and upper bounds for variables by adding additional constraints if necessary.
-- Transforms the problem to ensure all constraints are in the form of inequalities.
-- Adjusts the objective function if the problem is a maximization (standard form assumes minimization).
+### Returns:
+- A new `LPProblem` in standard form:
+    - The objective function will be converted to a **minimization** problem.
+    - All inequality constraints (`≤`, `≥`) are converted to **equalities** by adding slack or surplus variables.
+    - Variables with negative lower bounds will be shifted to ensure **non-negativity**.
+    - Slack variables are introduced as new non-negative variables for each `≤` constraint, and surplus variables for each `≥` constraint.
+
+### Process:
+1. **Objective Function**: 
+   - If the original problem is a maximization problem, the objective function is negated to convert it into a minimization problem.
+   
+2. **Constraints**: 
+   - For each `≤` constraint, a slack variable is added to convert it into an equality.
+   - For each `≥` constraint, a surplus variable is added to convert it into an equality.
+   - All equality constraints remain unchanged.
+   
+3. **Variables**:
+   - Variables with negative lower bounds are shifted to ensure they are non-negative in the standard form.
+   - Slack and surplus variables are introduced and added to the constraint matrix.
+
+### Example:
+```julia
+# Original problem with 2 variables and 3 constraints
+lp = LPProblem(
+    false,  # Maximize
+    [3.0, 2.0],  # Objective function coefficients
+    sparse([1, 2, 1, 3], [1, 1, 2, 2], [1.0, 1.0, 1.0, 1.0], 3, 2),  # Constraint matrix
+    [4.0, 2.0, 3.0],  # Right-hand side
+    ['L', 'L', 'L'],  # Constraints: less-than-or-equal-to
+    [0.0, 0.0],  # Lower bounds
+    [Inf, Inf],  # Upper bounds
+    ["x1", "x2"],  # Variable names
+    [:Continuous, :Continuous]  # Variable types
+)
+
+# Convert to standard form
+standard_lp = convert_to_standard_form(lp)
+```
+In the example, the original mazimization problem is converted to a minimization problem, whith slack varibles for each ≤ contraint to convert the problem into standard form.
 """
-function convert_to_standard_form(lp::LPProblem)
-    c, A, b, l, u = lp.c, lp.A, lp.b, lp.l, lp.u
-    m, n = size(A)
-    
-    ##### Handle lower and upper bounds for variables #####
-    for i in 1:n
-        if l[i] > -Inf
-            # Add a new constraint for the lower bound
-            A = [A; zeros(1, n)]
-            A[end, i] = -1
-            push!(b, -l[i])
-            push!(lp.constraint_types, 'L')
-        end
-        if u[i] < Inf
-            # Add a new constraint for the upper bound
-            A = [A; zeros(1, n)]
-            A[end, i] = 1
-            push!(b, u[i])
-            push!(lp.constraint_types, 'L')
-        end
-    end
+function convert_to_standard_form(lp::LPProblem)::LPProblem
+    # Access struct fields directly
+    is_minimize = lp.is_minimize
+    c = lp.c
+    A = lp.A
+    b = lp.b
+    constraint_types = copy(lp.constraint_types)
+    l = lp.l
+    u = lp.u
+    vars = lp.vars
+    variable_types = lp.variable_types
     
     m, n = size(A)
-    new_A = spzeros(eltype(A), m, n + m)
+    
+    # Initialize new sparse matrix for slack variables
+    new_A_rows = spzeros(Float64, m, 0)  # Start with no slack variables
     new_b = copy(b)
-    new_c = [c; zeros(m)]
-    
-    ##### Transform constraints into standard form #####
+    new_constraint_types = copy(constraint_types)
+    slack_var_count = 0
+
+    # Handle less-than-or-equal-to (L) constraints by adding slack variables
     for i in 1:m
-        if lp.constraint_types[i] == 'L'
-            new_A[i, :] = [A[i, :]; zeros(i-1); 1; zeros(m-i)]
-        elseif lp.constraint_types[i] == 'G'
-            new_A[i, :] = [-A[i, :]; zeros(i-1); 1; zeros(m-i)]
-            new_b[i] = -new_b[i]
-        elseif lp.constraint_types[i] == 'E'
-            new_A[i, :] = [A[i, :]; zeros(m)]
+        if constraint_types[i] == 'L'
+            slack_var_count += 1
+            # Add a new slack variable
+            slack_column = sparsevec([i], [1.0], m)  # Slack variable only affects the current row
+            new_A_rows = hcat(new_A_rows, slack_column)  # Add slack variable to the matrix
+            
+            # Update variable names and types
+            push!(vars, "s_$slack_var_count")
+            push!(variable_types, :Continuous)
         end
     end
     
-    ##### Adjust objective function if it's a maximization problem #####
-    if !lp.is_minimize
+    # Combine original matrix A with the new slack variables matrix
+    A_with_slack = hcat(A, new_A_rows)
+    
+    # Adjust the objective function to account for slack variables (with coefficient 0)
+    new_c = vcat(c, zeros(slack_var_count))  # Add zeros for slack variables
+    
+    # Convert maximization to minimization by negating the objective coefficients
+    if !is_minimize
         new_c = -new_c
     end
     
-    return new_A, new_b, new_c
+    # Convert all constraints to equalities
+    new_constraint_types .= 'E'
+
+    # Return the modified LP problem in standard form
+    return LPProblem(
+        true,  # Standard form requires minimization
+        new_c,  # Updated objective function
+        A_with_slack,  # Updated constraint matrix with slack variables
+        new_b,  # Right-hand side vector remains the same
+        new_constraint_types,  # All constraints are now equalities
+        zeros(n + slack_var_count),  # Lower bounds for original variables and slack variables
+        fill(Inf, n + slack_var_count),  # Upper bounds for original variables and slack variables
+        vars,  # Variable names including slack variables
+        variable_types  # Variable types including slack variables
+    )
 end
 
-###################################################################################
-## MIP code
-###################################################################################
-
-"""
-    convert_to_standard_form_mip(mip::MIPProblem) -> (new_A::SparseMatrixCSC, new_b::Vector{Float64}, new_c::Vector{Float64}, new_variable_types::Vector{Symbol})
-
-Converts a given `MIPProblem` to its standard form, transforming the constraints and objective function to fit the requirements of the standard mixed integer programming form.
-
-# Arguments
-- `mip::MIPProblem`: A struct representing the Mixed Integer Programming problem, containing the objective function, constraints, bounds, and variable types.
-
-# Returns
-- `new_A::SparseMatrixCSC`: The transformed constraint matrix in standard form.
-- `new_b::Vector{Float64}`: The transformed right-hand side of the constraints.
-- `new_c::Vector{Float64}`: The transformed objective function coefficients.
-- `new_variable_types::Vector{Symbol}`: The updated variable types, including new slack variables added during the transformation.
-
-# Method Details
-- Adds constraints to handle lower and upper bounds by introducing slack variables.
-- Ensures all constraints are in standard form (inequalities) and adjusts the right-hand side appropriately.
-- Adjusts the objective function if the problem is a maximization (standard form assumes minimization).
-"""
-function convert_to_standard_form_mip(mip::MIPProblem)
-    c, A, b, l, u = mip.c, mip.A, mip.b, mip.l, mip.u
-    variable_types = mip.variable_types
-    m, n = size(A)
-    
-    ##### Handle lower and upper bounds for variables #####
-    for i in 1:n
-        if l[i] > -Inf
-            # Add a new constraint for the lower bound
-            A = [A; zeros(1, n)]
-            A[end, i] = -1
-            push!(b, -l[i])
-            push!(mip.constraint_types, 'L')
-            push!(variable_types, :Continuous)  # New slack variable is continuous
-        end
-        if u[i] < Inf
-            # Add a new constraint for the upper bound
-            A = [A; zeros(1, n)]
-            A[end, i] = 1
-            push!(b, u[i])
-            push!(mip.constraint_types, 'L')
-            push!(variable_types, :Continuous)  # New slack variable is continuous
-        end
-    end
-    
-    m, n = size(A)
-    new_A = spzeros(eltype(A), m, n + m)
-    new_b = copy(b)
-    new_c = [c; zeros(m)]
-    new_variable_types = copy(variable_types)
-    
-    ##### Transform constraints into standard form #####
-    for i in 1:m
-        if mip.constraint_types[i] == 'L'
-            new_A[i, :] = [A[i, :]; zeros(i-1); 1; zeros(m-i)]
-        elseif mip.constraint_types[i] == 'G'
-            new_A[i, :] = [-A[i, :]; zeros(i-1); 1; zeros(m-i)]
-            new_b[i] = -new_b[i]
-        elseif mip.constraint_types[i] == 'E'
-            new_A[i, :] = [A[i, :]; zeros(m)]
-        end
-        push!(new_variable_types, :Continuous)  # The added slack variables are continuous
-    end
-    
-    ##### Adjust objective function if it's a maximization problem #####
-    if !mip.is_minimize
-        new_c = -new_c
-    end
-    
-    return new_A, new_b, new_c, new_variable_types
-end
 
 end # module
