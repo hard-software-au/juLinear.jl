@@ -938,28 +938,30 @@ Removes linearly dependent rows from the constraint matrix `A` of the `Preproces
 # Returns:
 A new `PreprocessedLPProblem` with linearly dependent rows removed.
 """
-function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
+function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
+    # Unpack the reduced problem
+    reduced_lp = preprocessed_lp.reduced_problem
+
     # Create the augmented matrix [A b]
-    augmented_matrix = hcat(preprocessed_lp.reduced_problem.A, preprocessed_lp.reduced_problem.b)
-    
+    augmented_matrix = hcat(reduced_lp.A, reduced_lp.b)
+
     rows_to_check = collect(1:size(augmented_matrix, 1))  # Start with all rows to check
     removed_rows = Vector{Int}()  # List of removed rows
     row_ratios = Dict{Int, Tuple{Int, Float64}}()  # Store ratios of removed rows
 
-    
     while length(rows_to_check) > 1
         current_row_index = rows_to_check[1]
         current_row = augmented_matrix[current_row_index, :]
-        
+
         for i in rows_to_check[2:end]
             compare_row = augmented_matrix[i, :]
-            
+
             # Find the first non-zero index in the current_row
             non_zero_idx = findfirst(abs.(current_row) .> ε)
-            
+
             if non_zero_idx !== nothing && compare_row[non_zero_idx] != 0
                 ratio = current_row[non_zero_idx] / compare_row[non_zero_idx]
-                
+
                 # Check if multiplying the compare_row by ratio gives the current_row
                 if all(abs.(current_row .- ratio .* compare_row) .< ε)
                     push!(removed_rows, i)  # Mark the row for removal
@@ -967,60 +969,56 @@ function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProble
                 end
             end
         end
-        
+
         rows_to_check = setdiff(rows_to_check, [current_row_index; removed_rows])  # Remove current and dependent rows
     end
 
     # Sort row information
     removed_rows = sort(removed_rows)
-    row_ratios = SortedDict(row_ratios)
 
-    # Debug statments
+    # Debug statements
     if verbose
-        # Debug block
         println("#" ^ 80)
         println("~" ^ 80)
-        println("Remove linearly dependent rows function")
+        println("Remove Linearly Dependent Rows Function")
         println("~" ^ 80)
         println("Removed rows: ", removed_rows)
-        println()
-        println("The row ratios: ")
-        for (row, ratio) in row_ratios
-            println("    ", row, " => ", ratio)
-        end
+        println("Row Ratios: ", row_ratios)
         println("~" ^ 80)
         println("#" ^ 80)
         println()
     end
-    
+
     # Create the reduced matrix and vectors by excluding the removed rows
-    non_removed_rows = setdiff(1:size(preprocessed_lp.reduced_problem.A, 1), removed_rows)
-    reduced_A = preprocessed_lp.reduced_problem.A[non_removed_rows, :]
-    reduced_b = preprocessed_lp.reduced_problem.b[non_removed_rows]
-    reduced_constraint_types = preprocessed_lp.reduced_problem.constraint_types[non_removed_rows]
+    non_removed_rows = setdiff(1:size(reduced_lp.A, 1), removed_rows)
+    reduced_A = reduced_lp.A[non_removed_rows, :]
+    reduced_b = reduced_lp.b[non_removed_rows]
+    reduced_constraint_types = reduced_lp.constraint_types[non_removed_rows]
 
     # Construct the reduced LPProblem
-    reduced_lp = LPProblem(
-        preprocessed_lp.reduced_problem.is_minimize,
-        preprocessed_lp.reduced_problem.c,
+    reduced_lp_problem = LPProblem(
+        reduced_lp.is_minimize,
+        reduced_lp.c,
         reduced_A,
         reduced_b,
-        preprocessed_lp.reduced_problem.l,
-        preprocessed_lp.reduced_problem.u,
-        preprocessed_lp.reduced_problem.vars,
-        reduced_constraint_types
+        reduced_constraint_types,
+        reduced_lp.l,
+        reduced_lp.u,
+        reduced_lp.vars,
+        reduced_lp.variable_types
     )
 
-    var_solutions = preprocessed_problem.var_solutions
-    
     # Return the updated PreprocessedLPProblem struct
     return PreprocessedLPProblem(
         preprocessed_lp.original_problem,
-        reduced_lp,
+        reduced_lp_problem,
         vcat(preprocessed_lp.removed_rows, removed_rows),
         preprocessed_lp.removed_cols,
-        row_ratios,
-        var_solutions 
+        merge(preprocessed_lp.row_ratios, row_ratios),
+        preprocessed_lp.var_solutions,
+        preprocessed_lp.row_scaling,
+        preprocessed_lp.col_scaling,
+        preprocessed_lp.is_infeasible
     )
 end
 
@@ -1041,23 +1039,27 @@ Applies presolve routines to the given `LPProblem` to reduce the problem size by
 # Returns:
 A `PreprocessedLPProblem` with a reduced problem that excludes zero rows, zero columns, singleton rows, and linearly dependent rows.
 """
-function presolve_lp(lp_problem::LPProblem; verbose::Bool=false)
+function presolve_lp(lp_problem::LPProblem; verbose::Bool = false)
     # Initialize PreprocessedLPProblem
-    preprocessed_lp = PreprocessedLPProblem(lp_problem, lp_problem, Int[], Int[], Dict())
+    preprocessed_lp = PreprocessedLPProblem(
+        lp_problem,       # Original problem
+        lp_problem,       # Reduced problem (initially same as original)
+        Int[],            # No removed rows initially
+        Int[],            # No removed columns initially
+        Dict{Int, Tuple{Int, Float64}}(),  # No row ratios initially
+        Dict{String, Float64}(),  # Empty variable solutions
+        Vector{Float64}(),  # Empty row scaling
+        Vector{Float64}(),  # Empty column scaling
+        false               # No infeasibility detected initially
+    )
 
-    # Preprocessing methods
+    # Apply preprocessing methods
     preprocessed_lp = lp_detect_and_remove_fixed_variables(preprocessed_lp; verbose=verbose)
-
     preprocessed_lp = lp_remove_zero_rows(preprocessed_lp; verbose=verbose)
-    preprocessed_lp = lp_remove_row_singletons(preprocessed_lp, verbose=verbose)
-
-
+    preprocessed_lp = lp_remove_row_singletons(preprocessed_lp; verbose=verbose)
     preprocessed_lp = lp_remove_zero_columns(preprocessed_lp; verbose=verbose)
+    preprocessed_lp = lp_remove_linearly_dependent_rows(preprocessed_lp; verbose=verbose)
 
-
-    preprocessed_lp = lp_remove_linearly_dependent_rows(preprocessed_lp, verbose=verbose)
-
-    
     return preprocessed_lp
 end
 
