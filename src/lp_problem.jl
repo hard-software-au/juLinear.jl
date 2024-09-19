@@ -14,60 +14,47 @@ export PreprocessedLPProblem
 """
     struct LPProblem
 
-Represents a standard Linear Programming (LP) problem.
+Represents a linear programming (LP) or mixed integer programming (MIP) problem.
 
 # Fields:
-- `is_minimize::Bool`: `true` if the objective is to minimize, `false` if it is to maximize.
-- `c::Vector{Float64}`: The objective function coefficients.
-- `A::SparseMatrixCSC{Float64, Int64}`: The sparse constraint matrix.
-- `b::Vector{Float64}`: The right-hand side values of the constraints.
-- `l::Vector{Float64}`: The lower bounds for the decision variables.
-- `u::Vector{Float64}`: The upper bounds for the decision variables.
-- `vars::Vector{String}`: The names of the decision variables.
-- `constraint_types::Vector{Char}`: The types of constraints (e.g., `<=`, `>=`, `=`).
+- `is_minimize::Bool`: True if the objective is to minimize, False for maximization problems.
+- `c::Vector{Float64}`: Coefficients of the objective function (c^T * X).
+- `A::SparseMatrixCSC{Float64, Int64}`: Constraint matrix (A in AX = b).
+- `b::Vector{Float64}`: Right-hand side of constraints (b in AX = b).
+- `constraint_types::Vector{Char}`: Types of constraints ('L' for ≤, 'G' for ≥, 'E' for =).
+- `l::Vector{Float64}`: Lower bounds for variables (l in l ≤ X).
+- `u::Vector{Float64}`: Upper bounds for variables (u in X ≤ u).
+- `vars::Vector{String}`: Names of variables (e.g., ["x1", "x2", "x3"]).
+- `variable_types::Vector{Symbol}`: Types of variables (e.g., `:Continuous`, `:Integer`, `:Binary`).
+
+# Example:
+```julia
+lp = LPProblem(
+    is_minimize = false,  # Maximization problem
+    c = [3.0, 5.0, 7.0],  # Coefficients for the objective function
+    A = sparse([1.0, 2.0, 3.0; 4.0, 5.0, 6.0]),  # Constraint matrix
+    b = [10.0, 20.0],  # Right-hand side of constraints
+    constraint_types = ['L', 'L'],  # Less than or equal constraints
+    l = [0.0, 0.0, 0.0],  # Lower bounds for variables
+    u = [Inf, Inf, 1.0],  # Upper bounds (third variable is binary)
+    vars = ["x1", "x2", "x3"],  # Variable names
+    variable_types = [:Continuous, :Integer, :Binary]  # Types of variables
+)
+```
 """
 struct LPProblem
-    is_minimize::Bool  # True if the objective is to minimize
-    c::Vector{Float64}  # Objective function coefficients
-    A::SparseMatrixCSC{Float64, Int64}  # Constraint matrix
-    b::Vector{Float64}  # Right-hand side of constraints
-    l::Vector{Float64}  # Variable lower bounds
-    u::Vector{Float64}  # Variable upper bounds
-    vars::Vector{String}  # Variable names
-    constraint_types::Vector{Char}  # Constraint types
+    is_minimize::Bool             # True if the objective is to minimize (if false, it's a maximization problem)
+    c::Vector{Float64}            # Objective function coefficients (c^T * X)
+    A::SparseMatrixCSC{Float64, Int64}  # Constraint matrix (A in AX = b)
+    b::Vector{Float64}            # Right-hand side of constraints (b in AX = b)
+    constraint_types::Vector{Char}  # Constraint types ('L' for <=, 'G' for >=, 'E' for =)
+    l::Vector{Float64}            # Lower bounds (l in l ≤ X)
+    u::Vector{Float64}            # Upper bounds (u in X ≤ u)
+    vars::Vector{String}          # Variable names (X_B, X_N)
+    variable_types::Vector{Symbol}  # Variable types: (:Continuous, :Integer, :Binary, :SemiContinuous, :SemiInteger)
 end
 
-##############################################################################
-#### MIPProblem Struct
-##############################################################################
 
-"""
-    struct MIPProblem
-
-Represents a Mixed Integer Programming (MIP) problem. Extends the `LPProblem` struct to include variable types.
-
-# Fields:
-- `is_minimize::Bool`: `true` if the objective is to minimize, `false` if it is to maximize.
-- `c::Vector{Float64}`: The objective function coefficients.
-- `A::SparseMatrixCSC{Float64, Int64}`: The sparse constraint matrix.
-- `b::Vector{Float64}`: The right-hand side values of the constraints.
-- `l::Vector{Float64}`: The lower bounds for the decision variables.
-- `u::Vector{Float64}`: The upper bounds for the decision variables.
-- `vars::Vector{String}`: The names of the decision variables.
-- `variable_types::Vector{Symbol}`: The types of variables (e.g., `:Binary`, `:Integer`, `:Continuous`).
-- `constraint_types::Vector{Char}`: The types of constraints (e.g., `<=`, `>=`, `=`).
-"""
-struct MIPProblem
-    is_minimize::Bool  # True if the objective is to minimize
-    c::Vector{Float64}  # Objective function coefficients
-    A::SparseMatrixCSC{Float64, Int64}  # Constraint matrix
-    b::Vector{Float64}  # Right-hand side of constraints
-    l::Vector{Float64}  # Variable lower bounds
-    u::Vector{Float64}  # Variable upper bounds
-    vars::Vector{String}  # Variable names
-    variable_types::Vector{Symbol}  # Array of variable types, same length as vars
-    constraint_types::Vector{Char}  # Constraint types
-end
 
 ##############################################################################
 #### PreprocessedLPProblem Struct
@@ -76,22 +63,46 @@ end
 """
     struct PreprocessedLPProblem
 
-Stores the original and reduced versions of an LP problem during preprocessing, as well as information about removed rows and columns.
+Represents a linear programming (LP) or mixed integer programming (MIP) problem after preprocessing steps.
 
 # Fields:
-- `original_problem::LPProblem`: The original LP problem before preprocessing.
-- `reduced_problem::LPProblem`: The reduced LP problem after preprocessing.
-- `removed_rows::Vector{Int}`: Indices of rows removed during preprocessing.
-- `removed_cols::Vector{Int}`: Indices of columns removed during preprocessing.
-- `row_ratios::Dict{Int, Tuple{Int, Float64}}`: Maps removed rows to their corresponding row and the ratio between them.
+- `original_problem::LPProblem`: The original problem before any preprocessing.
+- `reduced_problem::LPProblem`: The problem after preprocessing steps, such as removing fixed variables or redundant constraints.
+- `removed_rows::Vector{Int}`: Indices of the rows that were removed during preprocessing (e.g., redundant constraints).
+- `removed_cols::Vector{Int}`: Indices of the columns (variables) that were removed during preprocessing (e.g., fixed or dominated variables).
+- `row_ratios::Dict{Int, Tuple{Int, Float64}}`: Stores information about row reductions, where the key is the row index, and the value is a tuple containing the original row index and a ratio used during row elimination.
+- `var_solutions::Dict{String, Float64}`: A dictionary mapping the names of removed variables to their fixed values during preprocessing (e.g., variables fixed due to bounds or presolve procedures).
+- `row_scaling::Vector{Float64}`: Scaling factors applied to the rows (optional, if scaling was used for numerical stability).
+- `col_scaling::Vector{Float64}`: Scaling factors applied to the columns (optional, if scaling was used for numerical stability).
+- `is_infeasible::Bool`: A flag indicating whether the problem was detected as infeasible during preprocessing.
+
+# Example:
+```julia
+preprocessed_lp = PreprocessedLPProblem(
+    original_problem = lp,  # The original LP or MIP problem
+    reduced_problem = reduced_lp,  # The reduced problem after preprocessing
+    removed_rows = [2, 5],  # Rows that were removed
+    removed_cols = [1, 3],  # Columns (variables) that were removed
+    row_ratios = Dict(5 => (2, 0.5)),  # Ratio for row 5 being reduced from row 2
+    var_solutions = Dict("x1" => 1.0, "x3" => 2.0),  # Solution values for removed variables
+    row_scaling = [1.0, 0.5, 0.25],  # Scaling factors for rows
+    col_scaling = [1.0, 2.0, 0.75],  # Scaling factors for columns
+    is_infeasible = false  # No infeasibility detected
+)
+```
 """
 struct PreprocessedLPProblem
-    original_problem::LPProblem  # The original LP problem before preprocessing
-    reduced_problem::LPProblem   # The reduced LP problem after preprocessing
-    removed_rows::Vector{Int}    # Indices of removed rows
-    removed_cols::Vector{Int}    # Indices of removed columns (if applicable)
+    original_problem::LPProblem       # The original LP or MIP problem before preprocessing
+    reduced_problem::LPProblem        # The reduced problem after preprocessing
+    removed_rows::Vector{Int}         # Indices of removed rows
+    removed_cols::Vector{Int}         # Indices of removed columns (if applicable)
     row_ratios::Dict{Int, Tuple{Int, Float64}}  # Mapping of removed rows to their corresponding row and ratio
+    var_solutions::Dict{String, Float64}  # Mapping of variable names to their solution values from any presolve procedure
+    row_scaling::Vector{Float64}  # Scaling factors for rows (optional, if scaling is applied)
+    col_scaling::Vector{Float64}  # Scaling factors for columns (optional, if scaling is applied)
+    is_infeasible::Bool  # Flag for infeasibility detection
 end
+
 
 end # module
 
