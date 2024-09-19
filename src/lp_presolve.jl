@@ -5,7 +5,12 @@ using SparseArrays
 using DataStructures
 using lp_problem
 
-export lp_detect_and_remove_fixed_variables, presolve_lp, lp_remove_zero_rows, lp_remove_row_singletons, lp_remove_zero_columns, lp_remove_linearly_dependent_rows
+export lp_detect_and_remove_fixed_variables
+export presolve_lp
+export lp_remove_zero_rows
+export lp_remove_row_singletons
+export lp_remove_zero_columns
+export lp_remove_linearly_dependent_rows
 
 
 ##############################################################################
@@ -307,7 +312,7 @@ end
 - `lp_detect_and_remove_row_singletons`
 - `lp_detect_and_remove_column_singletons`
 """
-function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
+function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
     # Unpack problem
     original_lp = preprocessed_problem.original_problem
     reduced_lp = preprocessed_problem.reduced_problem
@@ -319,10 +324,21 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
     col_scaling = preprocessed_problem.col_scaling
     is_infeasible = preprocessed_problem.is_infeasible
 
-    # Efficiently find non-zero rows using sparse matrix properties
-    row_nnz = diff(reduced_lp.A.rowptr)
-    non_zero_rows = findall(row_nnz .> 0)
-    new_removed_rows = findall(row_nnz .== 0)
+    A = reduced_lp.A
+    b = reduced_lp.b
+    constraint_types = reduced_lp.constraint_types
+
+    # Efficiently find non-zero rows using the norm of each row
+    non_zero_rows = []
+    zero_rows = []
+
+    for i in 1:size(A, 1)
+        if norm(A[i, :], Inf) < ε
+            push!(zero_rows, i)
+        else
+            push!(non_zero_rows, i)
+        end
+    end
 
     # Debug statements
     if verbose 
@@ -332,15 +348,15 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
         println("~" ^ 80)
         println("Total number of rows: ", size(reduced_lp.A, 1))
         println("Non-zero rows: ", non_zero_rows)
-        println("Removed zero rows: ", new_removed_rows)
+        println("Removed zero rows: ", zero_rows)
         println("~" ^ 80)
         println("#" ^ 80)
         println()
     end
 
     # Check for infeasibility in zero rows
-    for idx in new_removed_rows
-        if reduced_lp.constraint_types[idx] == 'E' && abs(reduced_lp.b[idx]) > ε
+    for idx in zero_rows
+        if constraint_types[idx] == 'E' && abs(b[idx]) > ε
             is_infeasible = true
             if verbose
                 println("Infeasibility detected due to zero row at index $idx with non-zero RHS.")
@@ -354,7 +370,7 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
         return PreprocessedLPProblem(
             original_lp,
             reduced_lp,
-            vcat(removed_rows, new_removed_rows),
+            vcat(removed_rows, zero_rows),
             removed_cols,
             row_ratios,
             var_solutions,
@@ -365,9 +381,9 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
     end
 
     # Adjust the problem based on non-zero rows
-    new_A = reduced_lp.A[non_zero_rows, :]
-    new_b = reduced_lp.b[non_zero_rows]
-    new_constraint_types = reduced_lp.constraint_types[non_zero_rows]
+    new_A = A[non_zero_rows, :]
+    new_b = b[non_zero_rows]
+    new_constraint_types = constraint_types[non_zero_rows]
 
     # Construct the reduced LPProblem (variables remain unchanged)
     new_reduced_lp = LPProblem(
@@ -386,7 +402,7 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
     return PreprocessedLPProblem(
         original_lp,
         new_reduced_lp,
-        vcat(removed_rows, new_removed_rows),
+        vcat(removed_rows, zero_rows),
         removed_cols,  # Variables aren't removed in this process
         row_ratios,    # Update if necessary
         var_solutions,
