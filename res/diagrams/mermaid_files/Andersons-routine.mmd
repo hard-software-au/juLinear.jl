@@ -1,0 +1,17 @@
+graph TD
+    A[Start] --> B[Remove all fixed variables]
+    B --> C{No reductions in last pass?}
+    C --> |No| D[Check Rows]
+    D --> E[Remove all row singletons]
+    E --> F[Remove all forcing constraints]
+    F --> G[Remove all dominated constraints]
+    G --> H[Check Columns]
+    H --> I[Remove all free/implied free column singletons]
+    I --> J[Remove all column singletons in combination with doubleton equation]
+    J --> K[Remove all dominated columns]
+    K --> L[Check for Duplicates]
+    L --> M[Remove duplicate rows]
+    M --> N[Remove duplicate columns]
+    N --> C
+    C --> |Yes| O[Remove all empty rows and columns]
+    O --> P[End]

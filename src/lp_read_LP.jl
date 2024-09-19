@@ -52,8 +52,9 @@ println(lp.b)    # Right-hand side of constraints
 - The contariants are stored in a sparse matrix for effient handling of large problems.
 - Varibles without explicily defined bounds are assumend to have default bounds (-∞,∞).
 """
-function read_lp(filename::String)::LPProblem
+function read_lp(filename::String; verbose::Bool=false)
     # Initialize storage variables
+    if verbose println("Starting to read LP file: $filename") end
     is_minimize = true
     objective = Dict{String, Float64}()
     constraints = Vector{Dict{String, Float64}}()
@@ -71,71 +72,66 @@ function read_lp(filename::String)::LPProblem
     for raw_line in lines
         # Clean the line by removing comments and trimming whitespace
         line = strip(split(raw_line, "\\")[1])  # Remove comments starting with '\'
+        # Ensure 'line' is a String, not SubString
+        line = String(line)
         if line == ""
+            if verbose println("Skipping empty line") end
             continue  # Skip empty lines
         end
 
         # Detect section headers
         lower_line = lowercase(line)
+        if verbose println("Processing line: $line") end
         if startswith(lower_line, "minimize")
             current_section = "Objective"
             is_minimize = true
+            if verbose println("Detected section: Objective (Minimize)") end
             continue
         elseif startswith(lower_line, "maximize")
             current_section = "Objective"
             is_minimize = false
+            if verbose println("Detected section: Objective (Maximize)") end
             continue
         elseif startswith(lower_line, "subject to") || startswith(lower_line, "such that") || startswith(lower_line, "st")
             current_section = "Constraints"
+            if verbose println("Detected section: Constraints") end
             continue
         elseif startswith(lower_line, "bounds")
             current_section = "Bounds"
+            if verbose println("Detected section: Bounds") end
             continue
         elseif startswith(lower_line, "binary")
             current_section = "Binary"
+            if verbose println("Detected section: Binary Variables") end
             continue
         elseif startswith(lower_line, "general") || startswith(lower_line, "integer")
             current_section = "Integer"
+            if verbose println("Detected section: Integer Variables") end
             continue
         elseif startswith(lower_line, "end")
+            if verbose println("End of LP file detected") end
             break  # End of LP file
         end
 
         # Parse based on the current section
         if current_section == "Objective"
-            # Handle multi-line objective functions by accumulating lines until the next section
-            # Remove optional objective name (e.g., "obj: ")
-            expr = startswith(line, ":") ? strip(line[2:end]) : line
-            # Split the expression into tokens based on '+' and '-' operators
-            tokens = split(expr, r"(?=[+-])")
-            for token in tokens
-                if isempty(token)
-                    continue
-                end
-                # Determine the sign
-                sign = 1.0
-                if startswith(token, "-")
-                    sign = -1.0
-                    token = token[2:end]
-                elseif startswith(token, "+")
-                    token = token[2:end]
-                end
-                # Strip the token to remove any leading/trailing whitespace
-                token = strip(token)
-                # Split coefficient and variable
-                m = match(r"^(\d*\.?\d*)\s*\*?\s*([A-Za-z][A-Za-z0-9_]*)$", token)
-                if m !== nothing
-                    coeff_str, var = m.captures[1], m.captures[2]
-                    coeff = coeff_str == "" ? 1.0 : parse(Float64, coeff_str)
-                    objective[var] = get(objective, var, 0.0) + sign * coeff
-                    push!(vars_set, var)
-                else
-                    error("Failed to parse objective term: $token")
-                end
+            if verbose println("Parsing objective line: $line") end
+
+            # Handle the "obj:" prefix, if it exists
+            if startswith(lowercase(line), "obj:")
+                line = strip(line[5:end])  # Remove "obj:" prefix (5 characters including the space)
             end
+
+            # Remove optional colon (e.g., ":") if present, then proceed with parsing the expression
+            expr = startswith(line, ":") ? strip(line[2:end]) : line
+
+            # Parse the expression and update the objective dictionary
+            parse_expression(expr, objective, vars_set; verbose=verbose)
+
         elseif current_section == "Constraints"
+            if verbose println("Parsing constraint line: $line") end
+
             # Example constraint: c1: x1 + x2 <= 10
-            # Split into name (optional), expression, relation, and RHS
             m = match(r"^(?:(\w+)\s*:\s*)?(.+?)\s*(<=|>=|=)\s*([+-]?\d+\.?\d*)$", line)
             if m === nothing
                 error("Failed to parse constraint: $line")
@@ -143,106 +139,39 @@ function read_lp(filename::String)::LPProblem
             _, expr, relation, rhs_str = m.captures
             rhs = parse(Float64, rhs_str)
             push!(b, rhs)
-            # Parse the left-hand side expression
-            constraint = Dict{String, Float64}()
-            tokens = split(expr, r"(?=[+-])")
-            constant_term = 0.0  # Initialize constant term
+            if verbose println("Parsed constraint RHS: $rhs with relation: $relation") end
 
-            for token in tokens
-                if isempty(token)
-                    continue
-                end
-                # Determine the sign
-                sign = 1.0
-                if startswith(token, "-")
-                    sign = -1.0
-                    token = token[2:end]
-                elseif startswith(token, "+")
-                    token = token[2:end]
-                end
-                # Strip the token to remove any leading/trailing whitespace
-                token = strip(token)
-                # Attempt to match variable terms
-                m_var = match(r"^(\d*\.?\d*)\s*\*?\s*([A-Za-z][A-Za-z0-9_]*)$", token)
-                if m_var !== nothing
-                    coeff_str, var = m_var.captures[1], m_var.captures[2]
-                    coeff = coeff_str == "" ? 1.0 : parse(Float64, coeff_str)
-                    constraint[var] = get(constraint, var, 0.0) + sign * coeff
-                    push!(vars_set, var)
-                else
-                    # Attempt to match constant terms
-                    m_const = match(r"^([+-]?\d+\.?\d*)$", token)
-                    if m_const !== nothing
-                        const_val = parse(Float64, m_const.captures[1])
-                        constant_term += sign * const_val
-                    else
-                        error("Failed to parse constraint term: $token")
-                    end
-                end
-            end
+            constraint = Dict{String, Float64}()
+            # Parse the constraint expression
+            constant_term = parse_expression(expr, constraint, vars_set; verbose=verbose)
+
             # Adjust RHS with the constant term
             b[end] = b[end] - constant_term
+            if verbose println("Adjusted RHS: $(b[end]) with constant term: $constant_term") end
 
             push!(constraints, constraint)
-            # Record constraint type
             relation_char = relation == "<=" ? 'L' : (relation == ">=" ? 'G' : 'E')
             push!(constraint_types, relation_char)
+
         elseif current_section == "Bounds"
-            # Handle bounds like "0 <= x1 <= 100", "x2 >= 0", "x3 <= 50", "x4 free"
-            # Split the line into tokens
-            tokens = split(line)
-            if length(tokens) == 5 && tokens[2] == "<=" && tokens[4] == "<="
-                # Format: lower <= variable <= upper
-                lower = parse(Float64, tokens[1])
-                var = tokens[3]
-                upper = parse(Float64, tokens[5])
-                l_bounds[var] = lower
-                u_bounds[var] = upper
-                push!(vars_set, var)
-            elseif length(tokens) == 3
-                if tokens[2] == "<="
-                    # Format: variable <= upper
-                    var = tokens[1]
-                    upper = parse(Float64, tokens[3])
-                    u_bounds[var] = upper
-                    push!(vars_set, var)
-                elseif tokens[2] == ">="
-                    # Format: variable >= lower
-                    var = tokens[1]
-                    lower = parse(Float64, tokens[3])
-                    l_bounds[var] = lower
-                    push!(vars_set, var)
-                elseif tokens[1] == "free"
-                    # Format: free variable
-                    var = tokens[2]
-                    l_bounds[var] = -Inf
-                    u_bounds[var] = Inf
-                    push!(vars_set, var)
-                else
-                    error("Unrecognized bounds format: $line")
-                end
-            elseif length(tokens) == 4 && tokens[1] == "free"
-                # Handle "free variable"
-                var = tokens[2]
-                l_bounds[var] = -Inf
-                u_bounds[var] = Inf
-                push!(vars_set, var)
-            else
-                error("Unsupported bounds format: $line")
-            end
+            if verbose println("Parsing bounds line: $line") end
+            parse_bounds(line, l_bounds, u_bounds, vars_set; verbose=verbose)
+
         elseif current_section == "Binary"
-            # List of binary variables, possibly multiple on one line
+            if verbose println("Parsing binary variable line: $line") end
             vars = split(line)
             for var in vars
                 variable_types[var] = :Binary
                 push!(vars_set, var)
+                if verbose println("Parsed binary variable $var") end
             end
         elseif current_section == "Integer"
-            # List of integer variables, possibly multiple on one line
+            if verbose println("Parsing integer variable line: $line") end
             vars = split(line)
             for var in vars
                 variable_types[var] = :Integer
                 push!(vars_set, var)
+                if verbose println("Parsed integer variable $var") end
             end
         end
     end
@@ -257,6 +186,7 @@ function read_lp(filename::String)::LPProblem
     for (var, coeff) in objective
         if haskey(var_index, var)
             c[var_index[var]] = coeff
+            if verbose println("Assigned coefficient for variable $var: $coeff") end
         else
             error("Variable $var in objective not defined in variables.")
         end
@@ -274,6 +204,7 @@ function read_lp(filename::String)::LPProblem
                 push!(row, i)
                 push!(col, var_index[var])
                 push!(data, coeff)
+                if verbose println("Added constraint for variable $var at row $i: $coeff") end
             else
                 error("Variable $var in constraints not defined in variables.")
             end
@@ -282,9 +213,6 @@ function read_lp(filename::String)::LPProblem
 
     A_sparse = sparse(row, col, data, n_constraints, n_vars)
 
-    # Right-hand side vector
-    # Already collected in vector `b`
-
     # Bounds vectors
     l = fill(-Inf, n_vars)
     u = fill(Inf, n_vars)
@@ -292,9 +220,11 @@ function read_lp(filename::String)::LPProblem
     for var in vars
         if haskey(l_bounds, var)
             l[var_index[var]] = l_bounds[var]
+            if verbose println("Lower bound for $var: $(l_bounds[var])") end
         end
         if haskey(u_bounds, var)
             u[var_index[var]] = u_bounds[var]
+            if verbose println("Upper bound for $var: $(u_bounds[var])") end
         end
     end
 
@@ -302,7 +232,10 @@ function read_lp(filename::String)::LPProblem
     variable_types_vec = Symbol[]
     for var in vars
         push!(variable_types_vec, get(variable_types, var, :Continuous))
+        if verbose println("Variable type for $var: $(get(variable_types, var, :Continuous))") end
     end
+
+    if verbose println("Successfully parsed LP file") end
 
     # Create and return the LPProblem struct
     return LPProblem(
@@ -317,6 +250,107 @@ function read_lp(filename::String)::LPProblem
         variable_types_vec
     )
 end
+
+# Helper function to parse expressions (objective and constraints)
+function parse_expression(expr::AbstractString, coeff_dict::Dict{String, Float64}, vars_set::Set{String}; verbose::Bool=false)
+    tokens = split(expr, r"(?=[+-])")
+    constant_term = 0.0  # Initialize constant term
+
+    for token in tokens
+        if verbose println("Parsing token: $token") end
+        token = strip(token)
+        if isempty(token)
+            if verbose println("Skipping empty token") end
+            continue
+        end
+
+        # Determine the sign
+        sign = 1.0
+        if startswith(token, "-")
+            sign = -1.0
+            token = strip(token[2:end])
+        elseif startswith(token, "+")
+            token = strip(token[2:end])
+        end
+
+        if isempty(token)
+            if verbose println("Skipping empty token after stripping sign") end
+            continue
+        end
+
+        # Attempt to match variable terms
+        m_var = match(r"^(\d*\.?\d*)\s*([A-Za-z][A-Za-z0-9_]*)$", token)
+        if m_var !== nothing
+            coeff_str, var = m_var.captures[1], m_var.captures[2]
+            coeff = coeff_str == "" ? 1.0 : parse(Float64, coeff_str)
+            coeff *= sign
+            if verbose println("Parsed coefficient: $coeff for variable: $var") end
+            coeff_dict[var] = get(coeff_dict, var, 0.0) + coeff
+            push!(vars_set, var)
+        else
+            # Attempt to match constant terms
+            m_const = match(r"^([+-]?\d+\.?\d*)$", token)
+            if m_const !== nothing
+                const_val = parse(Float64, m_const.captures[1])
+                constant_term += sign * const_val
+                if verbose println("Parsed constant term: $const_val") end
+            else
+                error("Failed to parse term: $token")
+            end
+        end
+    end
+
+    return constant_term
+end
+
+# Helper function to parse bounds
+function parse_bounds(line::AbstractString, l_bounds::Dict{String, Float64}, u_bounds::Dict{String, Float64}, vars_set::Set{String}; verbose::Bool=false)
+    tokens = split(line)
+    if length(tokens) == 5 && (tokens[2] == "<=" || tokens[2] == ">=") && tokens[4] == tokens[2]
+        # Format: lower <= variable <= upper
+        lower = parse(Float64, tokens[1])
+        var = tokens[3]
+        upper = parse(Float64, tokens[5])
+        l_bounds[var] = lower
+        u_bounds[var] = upper
+        push!(vars_set, var)
+        if verbose println("Parsed bounds for variable $var: $lower <= $var <= $upper") end
+    elseif length(tokens) == 3 && (tokens[2] == "<=" || tokens[2] == ">=")
+        # Determine if tokens[1] is a variable or number
+        is_var1 = occursin(r"^[A-Za-z_]", tokens[1])
+        is_var3 = occursin(r"^[A-Za-z_]", tokens[3])
+        if is_var1 && !is_var3
+            # Format: variable <= upper OR variable >= lower
+            var = tokens[1]
+            bound = parse(Float64, tokens[3])
+            if tokens[2] == "<="
+                u_bounds[var] = bound
+                if verbose println("Parsed upper bound for variable $var: $var <= $bound") end
+            else  # ">="
+                l_bounds[var] = bound
+                if verbose println("Parsed lower bound for variable $var: $var >= $bound") end
+            end
+            push!(vars_set, var)
+        elseif !is_var1 && is_var3
+            # Format: lower <= variable OR upper >= variable
+            bound = parse(Float64, tokens[1])
+            var = tokens[3]
+            if tokens[2] == "<="
+                l_bounds[var] = bound
+                if verbose println("Parsed lower bound for variable $var: $bound <= $var") end
+            else  # ">="
+                u_bounds[var] = bound
+                if verbose println("Parsed upper bound for variable $var: $bound >= $var") end
+            end
+            push!(vars_set, var)
+        else
+            error("Unrecognized bounds format: $line")
+        end
+    else
+        error("Unsupported bounds format: $line")
+    end
+end
+
 
 ##########################################################################
 ## Write LP fields

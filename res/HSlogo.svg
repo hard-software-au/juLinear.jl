@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="35mm"
+   height="35mm"
+   id="svg1323"
+   sodipodi:version="0.32"
+   inkscape:version="0.43"
+   version="1.0"
+   sodipodi:docbase="C:\Harley"
+   sodipodi:docname="HSlogo.svg">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="3.4753651"
+     inkscape:cx="62.007874"
+     inkscape:cy="62.007874"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:showpageshadow="false"
+     inkscape:window-width="1256"
+     inkscape:window-height="598"
+     inkscape:window-x="16"
+     inkscape:window-y="299"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       orientation="vertical"
+       position="17.735867"
+       id="guide1445" />
+    <sodipodi:guide
+       orientation="horizontal"
+       position="17.628377"
+       id="guide1451" />
+    <sodipodi:guide
+       orientation="vertical"
+       position="106.41093"
+       id="guide2494" />
+    <sodipodi:guide
+       orientation="horizontal"
+       position="106.20747"
+       id="guide2496" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata1327">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="opacity:1;color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.97413594px;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       id="rect1419"
+       width="124.01575"
+       height="124.01575"
+       x="0"
+       y="1.7763568e-014" />
+    <g
+       id="g2219"
+       transform="matrix(0.994476,0,0,0.664948,0.415466,-6.531282)">
+      <text
+         transform="scale(0.743061,1.345784)"
+         sodipodi:linespacing="100%"
+         id="text2298"
+         y="59.051426"
+         x="22.078495"
+         style="font-size:46.96212006px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:VAG Round"
+         xml:space="preserve"><tspan
+           y="59.051426"
+           x="22.078495"
+           id="tspan2300"
+           sodipodi:role="line">HARD</tspan></text>
+      <text
+         transform="scale(0.734229,1.361973)"
+         sodipodi:linespacing="100%"
+         id="text2302"
+         y="124.13953"
+         x="23.16353"
+         style="font-size:47.25457764px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:VAG Round"
+         xml:space="preserve"><tspan
+           y="124.13953"
+           x="23.16353"
+           id="tspan2304"
+           sodipodi:role="line">WARE</tspan></text>
+      <text
+         transform="scale(0.794975,1.257901)"
+         sodipodi:linespacing="100%"
+         id="text2215"
+         y="98.763382"
+         x="19.847614"
+         style="font-size:50.24313736px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:VAG Round"
+         xml:space="preserve"><tspan
+           y="98.763382"
+           x="19.847614"
+           id="tspan2217"
+           sodipodi:role="line">SOFT</tspan></text>
+    </g>
+  </g>
+</svg>
