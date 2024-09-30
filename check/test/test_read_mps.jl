@@ -1,7 +1,3 @@
-# # Add the path to your src/ directory to the LOAD_PATH
-# push!(LOAD_PATH, joinpath(@__DIR__, "../../src"))
-
-
 using Test
 using lp_problem
 using lp_read_mps
@@ -70,7 +66,36 @@ mps_files = [
                 # Check the upper bounds (u)
                 @test lp.u == [Inf, Inf, Inf, Inf, Inf]  # No upper bounds, so all are ∞
             end
+
+            # Specific tests for the BLEND problem
+            if basename(file_path) == "blend.mps"
+                # Check the objective function coefficients
+                @test lp.c == [-110.0, -120.0, -130.0, -110.0, -115.0, 150.0]  # Expected objective function
+
+                # Expected constraint matrix (A)
+                expected_A = [
+                    # VEG01, VEG02, OIL01, OIL02, OIL03, PROD
+                    1.0   1.0   0.0   0.0   0.0   0.0;   # VVEG
+                    0.0   0.0   1.0   1.0   1.0   0.0;   # NVEG
+                    8.8   6.1   2.0   4.2   5.0  -6.0;   # UHRD
+                    -8.8   -6.1   -2.0   -4.2   -5.0  3.0;   # LHRD
+                    1.0   1.0   1.0   1.0   1.0  -1.0    # CONT
+                ]
+                # Compare the dense matrices directly
+                @test Matrix(lp.A) == expected_A  # Direct comparison with 2D array
+
+                # Check the RHS (b)
+                @test lp.b == [200.0, 250.0, 0.0, 0.0, 0.0]  # Expected RHS values
+
+                # Check the objective sense
+                @test lp.is_minimize == false  # Objective is MAX, so not minimize
+
+                # Check the lower bounds (l)
+                @test lp.l == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # Lower bounds for variables
+
+                # Check the upper bounds (u)
+                @test lp.u == [Inf, Inf, Inf, Inf, Inf, Inf]  # No upper bounds, so all are ∞
+            end
         end
     end
 end
-
