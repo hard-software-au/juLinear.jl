@@ -43,6 +43,33 @@ mps_files = [
                     @test lp.is_minimize == false  # Expected for blend.mps
                 end
             end
+
+            # Specific tests for the APPLIED_INTEGER_PROGRAMMING_9_7 problem
+            if basename(file_path) == "ex_9-7.mps"
+                # Check the objective function coefficients
+                @test lp.c == [4.0, 3.0, 1.0, 7.0, 6.0]  # Expected objective function
+
+                # Convert the sparse matrix A to a dense matrix for comparison
+                expected_A = [
+                    1.0  2.0  3.0  1.0 -3.0;  # ROW1
+                    2.0 -1.0  2.0  2.0  1.0;  # ROW2
+                    -3.0 2.0  1.0 -1.0  2.0   # ROW3
+                ]
+
+                @test Matrix(lp.A) == expected_A  # Compare the dense matrices
+                
+                # Check the RHS (b)
+                @test lp.b == [9.0, 10.0, 11.0]  # Expected RHS values
+
+                # Check the objective sense
+                @test lp.is_minimize == false  # Objective is MAX, so not minimize
+
+                # Check the lower bounds (l)
+                @test lp.l == [0.0, 0.0, 0.0, 0.0, 0.0]  # Lower bounds are all 0
+
+                # Check the upper bounds (u)
+                @test lp.u == [Inf, Inf, Inf, Inf, Inf]  # No upper bounds, so all are ∞
+            end
         end
     end
 end
