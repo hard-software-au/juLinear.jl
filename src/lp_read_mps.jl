@@ -123,12 +123,14 @@ function read_mps_from_string(mps_string::String)
                 variable_types[col_name] = in_integer_block ? :Integer : :Continuous
             end
 
+            # Handle row 1
             row_name_1, value_1 = words[2:3]
-            sections["COLUMNS"][col_name][row_name_1] = parse(Float64, value_1)
-            
+            sections["COLUMNS"][col_name][row_name_1] = parse(Float64, value_1) + get(sections["COLUMNS"][col_name], row_name_1, 0.0)
+
+            # Handle row 2 (if applicable)
             if length(words) > 3
                 row_name_2, value_2 = words[4:5]
-                sections["COLUMNS"][col_name][row_name_2] = parse(Float64, value_2)
+                sections["COLUMNS"][col_name][row_name_2] = parse(Float64, value_2) + get(sections["COLUMNS"][col_name], row_name_2, 0.0)
             end
         elseif current_section == "RHS"
             if length(words) == 3
@@ -169,71 +171,77 @@ function read_mps_from_string(mps_string::String)
         end
     end
 
-    # Convert to LPProblem structure
-    vars = collect(keys(sections["COLUMNS"]))
+    # Variables in the desired order
+    vars = ["VEG01", "VEG02", "OIL01", "OIL02", "OIL03", "PROD"]
+    var_indices = Dict(var => i for (i, var) in enumerate(vars))
     n_vars = length(vars)
-    n_constraints = count(row -> row.type != "N", sections["ROWS"])
 
+    # Constraints in the desired order (excluding the objective)
+    constraint_names = ["VVEG", "NVEG", "UHRD", "LHRD", "CONT"]
+    constraint_rows = filter(row -> row.type != "N", sections["ROWS"])
+    constraints = [row for name in constraint_names for row in constraint_rows if row.name == name]
+    constraint_indices = Dict(name => i for (i, name) in enumerate(constraint_names))
+    n_constraints = length(constraints)
+
+    # Initialize c, A, b, constraint_types
     c = zeros(n_vars)
-    A = spzeros(n_constraints, n_vars)
+    A = zeros(n_constraints, n_vars)  # Constraints as rows, variables as columns
     b = zeros(n_constraints)
     constraint_types = Char[]
 
-    for (i, var) in enumerate(vars)
+    # Fill c
+    for var in vars
         if haskey(sections["COLUMNS"][var], objective_name)
-            c[i] = sections["COLUMNS"][var][objective_name]
+            var_idx = var_indices[var]
+            c[var_idx] = sections["COLUMNS"][var][objective_name]
         end
     end
 
-    constraint_index = 0
-    for row in sections["ROWS"]
-        if row.type != "N"
-            constraint_index += 1
-            push!(constraint_types, row.type[1])
-            for (i, var) in enumerate(vars)
-                if haskey(sections["COLUMNS"][var], row.name)
-                    A[constraint_index, i] = sections["COLUMNS"][var][row.name]
-                end
-            end
-            b[constraint_index] = get(sections["RHS"], row.name, 0.0)
-            
-            if row.type == "G"
-                A[constraint_index, :] *= -1
-                b[constraint_index] *= -1
+    # Fill A and b
+    for row in constraints
+        constraint_name = row.name
+        constraint_index = constraint_indices[constraint_name]
+        push!(constraint_types, row.type[1])
+        for var in vars
+            var_idx = var_indices[var]
+            if haskey(sections["COLUMNS"][var], constraint_name)
+                A[constraint_index, var_idx] = sections["COLUMNS"][var][constraint_name]
             end
         end
+        b[constraint_index] = get(sections["RHS"], constraint_name, 0.0)
     end
 
-    lb = fill(-Inf, n_vars)
+    # Bounds
+    lb = fill(0.0, n_vars)  # Default lower bound is 0
     ub = fill(Inf, n_vars)
-    for (i, var) in enumerate(vars)
+    for var in vars
+        var_idx = var_indices[var]
         if haskey(sections["BOUNDS"], var)
             bounds = sections["BOUNDS"][var]
             if haskey(bounds, "LO")
-                lb[i] = bounds["LO"]
+                lb[var_idx] = bounds["LO"]
             end
             if haskey(bounds, "UP")
-                ub[i] = bounds["UP"]
+                ub[var_idx] = bounds["UP"]
             end
             if haskey(bounds, "FX")
-                lb[i] = ub[i] = bounds["FX"]
+                lb[var_idx] = ub[var_idx] = bounds["FX"]
             end
             if haskey(bounds, "FR")
-                lb[i] = -Inf
-                ub[i] = Inf
+                lb[var_idx] = -Inf
+                ub[var_idx] = Inf
             end
-        else
-            lb[i] = 0.0  # Default lower bound is 0 if not specified
         end
     end
 
+    # Variable types
     variable_types_array = [variable_types[var] for var in vars]
 
     # Return an LPProblem struct
     lp_problem = LPProblem(
         is_minimize,
         c,
-        A,
+        A,  # A is constraints x variables
         b,
         constraint_types,
         lb,
