@@ -81,94 +81,161 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProbl
         println()
         println("#" ^ 80)
         println("~" ^ 80)
-        println("convert_to_standard_form")
+        println("Starting conversion to standard form...")
         println("~" ^ 80)
     end
 
+    # Unpack LP problem components
     is_minimize = lp.is_minimize
-    c = lp.c
-    A = lp.A
-    b = lp.b
+    c = copy(lp.c)
+    A = copy(lp.A)
+    b = copy(lp.b)
     constraint_types = copy(lp.constraint_types)
-    l = lp.l
-    u = lp.u
-    vars = lp.vars
-    variable_types = lp.variable_types
+    l = copy(lp.l)
+    u = copy(lp.u)
+    vars = copy(lp.vars)
+    variable_types = copy(lp.variable_types)
     
-    m, n = size(A)
-    
-    # Initialize new sparse matrix for slack variables
-    new_A_rows = spzeros(Float64, m, 0)  # Start with no slack variables
-    new_b = copy(b)
-    new_constraint_types = copy(constraint_types)
-    slack_var_count = 0
+    m, n = size(A)  # Number of constraints and variables
+
+    # Initialize counts and new structures
+    slack_var_count = 0      # Counter for slack variables
+    surplus_var_count = 0    # Counter for surplus variables
+    artificial_var_count = 0 # Counter for artificial variables (if needed)
+    new_vars = String[]      # Names of new variables
+    new_variable_types = Symbol[]  # Types of new variables
+    new_l = Float64[]        # Lower bounds for new variables
+    new_u = Float64[]        # Upper bounds for new variables
+    new_A_cols = spzeros(Float64, m, 0)  # Columns to be added to A
 
     if verbose
         println("Initial problem details:")
-        println("Objective function: ", c)
-        println("Constraints matrix (A): ", A)
-        println("Right-hand side (b): ", b)
+        println("Objective function coefficients (c): ", c)
+        println("Constraint matrix (A):\n", Matrix(A))
+        println("Right-hand side vector (b): ", b)
         println("Constraint types: ", constraint_types)
+        println("Variable lower bounds (l): ", l)
+        println("Variable upper bounds (u): ", u)
+        println("-" ^ 80)
     end
 
-    # Handle less-than-or-equal-to (L) constraints by adding slack variables
-    for i in 1:m
-        if constraint_types[i] == 'L'
-            slack_var_count += 1
-            # Add a new slack variable
-            slack_column = sparsevec([i], [1.0], m)  # Slack variable only affects the current row
-            new_A_rows = hcat(new_A_rows, slack_column)  # Add slack variable to the matrix
-            
-            # Update variable names and types
-            push!(vars, "s_$slack_var_count")
-            push!(variable_types, :Continuous)
-        end
-    end
-    
-    # Combine original matrix A with the new slack variables matrix
-    A_with_slack = hcat(A, new_A_rows)
-    
-    # Adjust the objective function to account for slack variables (with coefficient 0)
-    new_c = vcat(c, zeros(slack_var_count))
-    
-    # If the original problem was a maximization, negate the objective coefficients
+    # Step 1: Convert maximization to minimization (if necessary)
     if !is_minimize
-        new_c = -new_c
+        c = -c
+        is_minimize = true
         if verbose
-            println("~" ^ 80)
-            println("Maximization converted to minimization:")
-            println("New objective: ", new_c)
+            println("Converted maximization problem to minimization by negating the objective coefficients.")
+            println("New objective function coefficients (c): ", c)
+            println("-" ^ 80)
         end
     end
-    
-    # Convert all constraints to equalities
-    new_constraint_types .= 'E'
 
+    # Step 2: Adjust variables with negative lower bounds to ensure non-negativity
+    for j in 1:n
+        if l[j] < 0
+            shift_amount = -l[j]
+            # Adjust the bounds
+            l[j] += shift_amount  # l[j] becomes 0
+            if isfinite(u[j])
+                u[j] += shift_amount
+            end
+            # Adjust the corresponding column in A and the RHS vector b
+            A_col = A[:, j]
+            b -= A_col * shift_amount
+            if verbose
+                println("Variable $(vars[j]) has negative lower bound.")
+                println("Shifting variable by ", shift_amount, " to make it non-negative.")
+                println("Updated lower bound l[$j]: ", l[j])
+                println("Updated upper bound u[$j]: ", u[j])
+                println("Adjusted RHS vector (b): ", b)
+                println("-" ^ 80)
+            end
+        end
+    end
+
+    # Step 3: Add slack or surplus variables to convert inequalities to equalities
+    new_constraint_types = fill('E', m)  # All constraints will be equalities
+    for i in 1:m
+        ct = constraint_types[i]
+        if ct == 'L'
+            # Add slack variable
+            slack_var_count += 1
+            slack_var_name = "s_$slack_var_count"
+            slack_column = sparsevec([i], [1.0], m)
+            new_A_cols = hcat(new_A_cols, slack_column)
+            push!(new_vars, slack_var_name)
+            push!(new_variable_types, :Continuous)
+            push!(new_l, 0.0)
+            push!(new_u, Inf)
+            if verbose
+                println("Added slack variable '$slack_var_name' to constraint $i (<=).")
+            end
+        elseif ct == 'G'
+            # Add surplus variable
+            surplus_var_count += 1
+            surplus_var_name = "r_$surplus_var_count"
+            surplus_column = sparsevec([i], [-1.0], m)
+            new_A_cols = hcat(new_A_cols, surplus_column)
+            push!(new_vars, surplus_var_name)
+            push!(new_variable_types, :Continuous)
+            push!(new_l, 0.0)
+            push!(new_u, Inf)
+            if verbose
+                println("Added surplus variable '$surplus_var_name' to constraint $i (>=).")
+            end
+        elseif ct == 'E'
+            # Equality constraint; no variable needed
+            if verbose
+                println("Constraint $i is an equality; no slack or surplus variable added.")
+            end
+        else
+            error("Unknown constraint type: $(ct)")
+        end
+    end
+
+    # Step 4: Update the constraint matrix A and objective function coefficients c
+    A = hcat(A, new_A_cols)
+    c = vcat(c, zeros(length(new_vars)))
+
+    # Step 5: Update variable lists and bounds
+    vars = vcat(vars, new_vars)
+    variable_types = vcat(variable_types, new_variable_types)
+    l = vcat(l, new_l)
+    u = vcat(u, new_u)
+
+    # Step 6: Ensure all variables are non-negative
+    # At this point, all variables should be non-negative due to the earlier adjustments
+
+    # Final verbose output
     if verbose
-        println("~" ^ 80)
+        println("-" ^ 80)
         println("Final problem in standard form:")
-        println("Objective function: ", new_c)
-        println("Constraints matrix (A): ", A_with_slack)
-        println("Right-hand side (b): ", new_b)
+        println("Objective function coefficients (c): ", c)
+        println("Constraint matrix (A):\n", Matrix(A))
+        println("Right-hand side vector (b): ", b)
+        println("Constraint types: ", new_constraint_types)
+        println("Variable names: ", vars)
+        println("Variable types: ", variable_types)
+        println("Variable lower bounds (l): ", l)
+        println("Variable upper bounds (u): ", u)
         println("~" ^ 80)
+        println("Conversion to standard form completed.")
         println("#" ^ 80)
         println()
     end
 
     # Return the modified LP problem in standard form
     return LPProblem(
-        true,  # Standard form requires minimization
-        new_c,  # Updated objective function
-        A_with_slack,  # Updated constraint matrix with slack variables
-        new_b,  # Right-hand side vector remains the same
-        new_constraint_types,  # All constraints are now equalities
-        l,  # Lower bounds for original variables
-        fill(Inf, n + slack_var_count),  # Upper bounds (infinity for all variables)
-        vars,  # Variable names including slack variables
-        variable_types  # Variable types
+        is_minimize,          # Objective is now minimization
+        c,                    # Updated objective function coefficients
+        A,                    # Updated constraint matrix
+        b,                    # Updated RHS vector
+        new_constraint_types, # All constraints are equalities
+        l,                    # Updated lower bounds
+        u,                    # Updated upper bounds
+        vars,                 # Updated variable names
+        variable_types        # Updated variable types
     )
 end
-
-
 
 end # module
