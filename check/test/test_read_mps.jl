@@ -1,17 +1,23 @@
 using Test
+
+# Add the source folder to the load path
+push!(LOAD_PATH, abspath(joinpath(@__DIR__, "..", "..", "src")))
 using lp_problem
 using lp_read_mps
-using test_framework  # Load the base directory
+
+# Helper function to get full path of an MPS file
+function get_full_path(relative_path::String)
+    return abspath(joinpath(@__DIR__, "..", "..", relative_path))
+end
 
 # List of MPS file paths you want to test, using relative paths
 mps_files = [
-    get_full_path("problems/mps_files/ex4-3.mps"),
-    get_full_path("problems/mps_files/ex_9-7.mps"),
-    get_full_path("problems/mps_files/problem.mps"),
-    get_full_path("problems/mps_files/simple.mps"),
-    get_full_path("problems/mps_files/test.mps"),
-    get_full_path("problems/mps_files/blend.mps")
-    # Add more MPS files here
+    get_full_path("check/problems/mps_files/ex4-3.mps"),
+    get_full_path("check/problems/mps_files/ex_9-7.mps"),
+    get_full_path("check/problems/mps_files/problem.mps"),
+    get_full_path("check/problems/mps_files/simple.mps"),
+    get_full_path("check/problems/mps_files/test.mps"),
+    get_full_path("check/problems/mps_files/blend.mps")
 ]
 
 # Top-level test set for all MPS files
