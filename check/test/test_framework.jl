@@ -54,14 +54,24 @@ Run all unit tests in the specified test modules.
 run_tests(["ModuleA", "ModuleB", "ModuleC"])
 ```
 """
-function run_tests(test_modules::Vector{String})
-    @testset "All Tests" begin
+function run_tests(test_modules::Vector{String}; verbose::Bool=false)
+    results = @testset "All Tests" begin
         for module_name in test_modules
             file_path = get_test_file_path("test_$(module_name).jl")
             include(file_path)
         end
     end
+    if verbose
+        println()
+        println("~ "^40)
+        println("Verbose:")
+        println("~ "^40)
+        return results
+    else
+        return nothing
+    end
 end
+
 
 """
     create_module_tests(module_name::String)
