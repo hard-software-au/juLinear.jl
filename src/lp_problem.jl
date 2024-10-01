@@ -43,16 +43,17 @@ lp = LPProblem(
 ```
 """
 struct LPProblem
-    is_minimize::Bool             # True if the objective is to minimize (if false, it's a maximization problem)
-    c::Vector{Float64}            # Objective function coefficients (c^T * X)
-    A::SparseMatrixCSC{Float64, Int64}  # Constraint matrix (A in AX = b)
-    b::Vector{Float64}            # Right-hand side of constraints (b in AX = b)
-    constraint_types::Vector{Char}  # Constraint types ('L' for <=, 'G' for >=, 'E' for =)
-    l::Vector{Float64}            # Lower bounds (l in l ≤ X)
-    u::Vector{Float64}            # Upper bounds (u in X ≤ u)
-    vars::Vector{String}          # Variable names (X_B, X_N)
-    variable_types::Vector{Symbol}  # Variable types: (:Continuous, :Integer, :Binary, :SemiContinuous, :SemiInteger)
+    is_minimize::Bool                   # True for minimization, false for maximization
+    c::Vector{Float64}                  # Objective coefficients (cᵀX)
+    A::SparseMatrixCSC{Float64, Int64}  # Constraint matrix (AX = b)
+    b::Vector{Float64}                  # Right-hand side vector
+    constraint_types::Vector{Char}      # Constraint types ('L' ≤, 'G' ≥, 'E' =)
+    l::Vector{Float64}                  # Lower bounds
+    u::Vector{Float64}                  # Upper bounds
+    vars::Vector{String}                # Variable names
+    variable_types::Vector{Symbol}      # Variable types (:Continuous, :Integer, etc.)
 end
+
 
 
 
