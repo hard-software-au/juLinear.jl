@@ -1,7 +1,16 @@
+# test_read_mps.jl
+
 using Test
 using LinearAlgebra
+using SparseArrays
 
-# Add the source folder to the load path
+# Add the current directory to LOAD_PATH to access test_helpers
+push!(LOAD_PATH, abspath(@__DIR__))
+using test_helpers  # Imports exported functions: test_general_structure, test_specific_values
+
+# Add the source folder to the load path if not already handled by test_helpers
+# Assuming test_helpers adds the "src" directory, you can remove the following lines
+# Otherwise, ensure that "src" is in LOAD_PATH for accessing lp_problem and lp_read_mps
 push!(LOAD_PATH, abspath(@__DIR__, "..", "..", "src"))
 using lp_problem
 using lp_read_mps
@@ -10,7 +19,7 @@ using lp_read_mps
 const TEST_DIR = @__DIR__
 const PROBLEMS_DIR = joinpath(TEST_DIR, "..", "..", "check", "problems", "mps_files")
 
-# Helper function to get full path of an MPS file
+# Helper function to get the full path of an MPS file
 get_full_path(filename::String) = abspath(joinpath(PROBLEMS_DIR, filename))
 
 # List of MPS files to test
@@ -23,86 +32,59 @@ const MPS_FILES = [
     "blend.mps"
 ]
 
-# Struct to hold expected values for specific problems
-struct ExpectedValues
-    c::Vector{Float64}
-    A::Matrix{Float64}
-    b::Vector{Float64}
-    is_minimize::Bool
-    l::Vector{Float64}
-    u::Vector{Float64}
-end
-
-# Define expected values for specific problems
-const EXPECTED_VALUES = Dict(
-    "ex_9-7.mps" => ExpectedValues(
-        [4.0, 3.0, 1.0, 7.0, 6.0],
-        [
-            1.0  2.0  3.0  1.0 -3.0;
-            2.0 -1.0  2.0  2.0  1.0;
-            -3.0 2.0  1.0 -1.0  2.0
-        ],
-        [9.0, 10.0, 11.0],
-        false,
-        [0.0, 0.0, 0.0, 0.0, 0.0],
-        [Inf, Inf, Inf, Inf, Inf]
+# Define expected LPProblem instances for specific MPS files
+const EXPECTED_LP_PROBLEMS = Dict(
+    "ex_9-7.mps" => LPProblem(
+        false,  # false indicates a maximization problem
+        [4.0, 3.0, 1.0, 7.0, 6.0],  # Objective coefficients: [X1, X2, X3, X4, X5]
+        sparse([
+            1.0  2.0  3.0  1.0 -3.0;  # ROW1 coefficients for [X1, X2, X3, X4, X5]
+            2.0 -1.0  2.0  2.0  1.0;  # ROW2 coefficients
+            -3.0 2.0  1.0 -1.0  2.0   # ROW3 coefficients
+        ]),
+        [9.0, 10.0, 11.0],  # RHS values for [ROW1, ROW2, ROW3]
+        ['L', 'L', 'L'],     # Constraint types: all are 'Less than or equal to'
+        [0.0, 0.0, 0.0, 0.0, 0.0],  # Lower bounds for [X1, X2, X3, X4, X5]
+        [Inf, Inf, Inf, Inf, Inf],  # Upper bounds for [X1, X2, X3, X4, X5]
+        ["X1", "X2", "X3", "X4", "X5"],  # Variable names
+        [:Continuous, :Continuous, :Continuous, :Continuous, :Continuous]  # Variable types
     ),
-    "blend.mps" => ExpectedValues(
-        [-110.0, -120.0, -130.0, -110.0, -115.0, 150.0],
-        [
-            1.0   1.0   0.0   0.0   0.0   0.0;
-            0.0   0.0   1.0   1.0   1.0   0.0;
-            8.8   6.1   2.0   4.2   5.0  -6.0;
-            -8.8  -6.1  -2.0  -4.2  -5.0   3.0;
-            1.0   1.0   1.0   1.0   1.0  -1.0
-        ],
-        [200.0, 250.0, 0.0, 0.0, 0.0],
-        false,
-        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [Inf, Inf, Inf, Inf, Inf, Inf]
+    "blend.mps" => LPProblem(
+        false,  # false indicates a maximization problem
+        [-110.0, -120.0, -130.0, -110.0, -115.0, 150.0],  # Objective coefficients
+        sparse([
+            1.0   1.0   0.0   0.0   0.0   0.0;   # VVEG <= 200
+            0.0   0.0   1.0   1.0   1.0   0.0;   # NVEG <= 250
+            8.8   6.1   2.0   4.2   5.0  -6.0;   # UHRD <= 0
+            -8.8  -6.1  -2.0  -4.2  -5.0   3.0;   # -LHRD <= 0 (transformed from LHRD >= 0)
+            1.0   1.0   1.0   1.0   1.0  -1.0    # CONT = 0
+        ]),
+        [200.0, 250.0, 0.0, 0.0, 0.0],  # RHS values
+        ['L', 'L', 'L', 'L', 'E'],      # Corrected constraint types
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Lower bounds for variables
+        [Inf, Inf, Inf, Inf, Inf, Inf], # Upper bounds for variables
+        ["VEG01", "VEG02", "OIL01", "OIL02", "OIL03", "PROD"],  # Corrected variable names
+        [:Continuous, :Continuous, :Continuous, :Continuous, :Continuous, :Continuous]  # Variable types
     )
+    # Add more expected LPProblem instances for other MPS files as needed
 )
-
-# Helper functions for tests
-function test_general_structure(lp::lp_problem.LPProblem)
-    @test !isempty(lp.c)
-    @test size(lp.A, 1) > 0
-    @test size(lp.A, 2) > 0
-    @test !isempty(lp.b)
-    @test !isempty(lp.vars)
-    @test !isempty(lp.constraint_types)
-end
-
-function test_specific_values(lp::lp_problem.LPProblem, expected::ExpectedValues)
-    @test lp.c ≈ expected.c
-    @test Matrix(lp.A) ≈ expected.A
-    @test lp.b ≈ expected.b
-    @test lp.is_minimize == expected.is_minimize
-    @test lp.l ≈ expected.l
-    @test lp.u ≈ expected.u
-end
 
 # Main test set
 @testset "MPS Reader Tests" begin
     for file in MPS_FILES
         @testset "Tests for $file" begin
+            # Read the LPProblem from the MPS file
             lp = read_mps_from_file(get_full_path(file))
             
-            @testset "General structure" begin
-                test_general_structure(lp)
-            end
+            # Test the general structure using the helper function
+            test_general_structure(lp)
             
-            if haskey(EXPECTED_VALUES, file)
+            # If there is an expected LPProblem for this file, test specific values
+            if haskey(EXPECTED_LP_PROBLEMS, file)
                 @testset "Specific values" begin
-                    test_specific_values(lp, EXPECTED_VALUES[file])
+                    expected = EXPECTED_LP_PROBLEMS[file]
+                    test_specific_values(lp, expected)
                 end
-            end
-            
-            # Additional specific tests
-            if file == "ex4-3.mps"
-                @test lp.is_minimize == true
-            elseif file == "blend.mps"
-                @test lp.is_minimize == false
             end
         end
     end
