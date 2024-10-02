@@ -8,9 +8,6 @@ using SparseArrays
 push!(LOAD_PATH, abspath(@__DIR__))
 using test_helpers  # Imports exported functions: test_general_structure, test_specific_values
 
-# Add the source folder to the load path if not already handled by test_helpers
-# Assuming test_helpers adds the "src" directory, you can remove the following lines
-# Otherwise, ensure that "src" is in LOAD_PATH for accessing lp_problem and lp_read_mps
 push!(LOAD_PATH, abspath(@__DIR__, "..", "..", "src"))
 using lp_problem
 using lp_read_mps
