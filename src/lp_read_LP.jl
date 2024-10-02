@@ -278,7 +278,7 @@ function parse_expression(expr::AbstractString, coeff_dict::Dict{String, Float64
             continue
         end
 
-        # Attempt to match variable terms
+        # Attempt to match variable terms with single variable
         m_var = match(r"^(\d*\.?\d*)\s*([A-Za-z][A-Za-z0-9_]*)$", token)
         if m_var !== nothing
             coeff_str, var = m_var.captures[1], m_var.captures[2]
@@ -288,20 +288,34 @@ function parse_expression(expr::AbstractString, coeff_dict::Dict{String, Float64
             coeff_dict[var] = get(coeff_dict, var, 0.0) + coeff
             push!(vars_set, var)
         else
-            # Attempt to match constant terms
-            m_const = match(r"^([+-]?\d+\.?\d*)$", token)
-            if m_const !== nothing
-                const_val = parse(Float64, m_const.captures[1])
-                constant_term += sign * const_val
-                if verbose println("Parsed constant term: $const_val") end
+            # Attempt to match variable terms with multiple variables (Non-linear)
+            m_multivar = match(r"^(\d*\.?\d*)\s*([A-Za-z][A-Za-z0-9_]*)\s*([A-Za-z][A-Za-z0-9_]*)$", token)
+            if m_multivar !== nothing
+                # Handle multi-variable term
+                coeff_str, var1, var2 = m_multivar.captures
+                coeff = coeff_str == "" ? 1.0 : parse(Float64, coeff_str)
+                coeff *= sign
+                if verbose println("Detected non-linear term: $coeff $var1 $var2") end
+                # Raise a specific error for non-linear terms
+                throw(ArgumentError("Non-linear terms are not supported: $coeff $var1 $var2"))
             else
-                error("Failed to parse term: $token")
+                # Attempt to match constant terms
+                m_const = match(r"^([+-]?\d+\.?\d*)$", token)
+                if m_const !== nothing
+                    const_val = parse(Float64, m_const.captures[1])
+                    constant_term += sign * const_val
+                    if verbose println("Parsed constant term: $const_val") end
+                else
+                    throw(ArgumentError("Failed to parse term: $token"))
+                end
             end
         end
     end
 
     return constant_term
 end
+
+
 
 # Helper function to parse bounds
 function parse_bounds(line::AbstractString, l_bounds::Dict{String, Float64}, u_bounds::Dict{String, Float64}, vars_set::Set{String}; verbose::Bool=false)
