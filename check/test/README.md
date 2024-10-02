@@ -25,8 +25,6 @@ raising appropriate errors.
 - `test_read_LP.jl`: Contains unit tests for the LP file reader, including tests for both valid and corrupt LP files.
 
 
-
-
 ## Running the Unit Tests
 
 ```bash
