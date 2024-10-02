@@ -125,7 +125,7 @@ function read_mps_from_string(mps_string::String)
 
             row_name_1, value_1 = words[2:3]
             sections["COLUMNS"][col_name][row_name_1] = parse(Float64, value_1)
-            
+
             if length(words) > 3
                 row_name_2, value_2 = words[4:5]
                 sections["COLUMNS"][col_name][row_name_2] = parse(Float64, value_2)
@@ -189,14 +189,15 @@ function read_mps_from_string(mps_string::String)
     for row in sections["ROWS"]
         if row.type != "N"
             constraint_index += 1
-            push!(constraint_types, row.type[1])
+            # Map 'G' to 'L' after transformation
+            push!(constraint_types, row.type == "G" ? 'L' : row.type[1])
             for (i, var) in enumerate(vars)
                 if haskey(sections["COLUMNS"][var], row.name)
                     A[constraint_index, i] = sections["COLUMNS"][var][row.name]
                 end
             end
             b[constraint_index] = get(sections["RHS"], row.name, 0.0)
-            
+
             if row.type == "G"
                 A[constraint_index, :] *= -1
                 b[constraint_index] *= -1
