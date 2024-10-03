@@ -1,59 +1,91 @@
-# Linear Programming Code Repository
+# juLinear.jl Code Repository
 
-This repository contains a collection of linear programming (LP) prototypes aimed at understanding and exploring different procedures used in solving LP problems. The project includes implementations of various algorithms, utilities for reading and processing LP data, and interactive Jupyter notebooks that guide you through the intricacies of these methods. The primary focus is on providing a hands-on, educational resource for anyone interested in the mechanics of linear programming.
+This repository contains a collection of linear programming (LP) prototypes aimed at exploring and understanding various procedures used to solve LP problems. It includes implementations of multiple algorithms, utilities for reading and processing LP data, and interactive Jupyter notebooks for guided learning. The focus is on creating a hands-on, educational resource for anyone interested in linear programming mechanics.
+
+## Table of Contents
+1. [Introduction](#introduction)
+    - [Key Objectives of This Project](#key-objectives-of-this-project)
+2. [Directory Structure](#directory-structure)
+    - [Root Directory](#root-directory)
+    - [check](#check)
+    - [docs](#docs)
+    - [nb](#nb)
+    - [res](#res)
+    - [src](#src)
+    - [tools](#tools)
+3. [Usage](#usage)
+    - [Command Line Options](#command-line-options)
+4. [Contribution Guidelines](#contribution-guidelines)
+5. [License](#license)
 
 ## Introduction
 
-Linear programming is a powerful mathematical method used to optimize a linear objective function, subject to linear equality and inequality constraints. This project serves as a comprehensive resource for students, researchers, and practitioners who wish to deepen their understanding of LP by exploring and implementing various LP procedures.
+Linear programming is a powerful mathematical optimization technique used to solve problems with a linear objective function and linear constraints. This project serves as a resource for students, researchers, and practitioners who wish to deepen their understanding of LP by implementing and experimenting with various algorithms and techniques.
 
-### Key Objectives of This Project:
-- **Prototype Development**: Provide prototype implementations of classic and modern LP algorithms, such as the Simplex method and Interior-Point methods.
-- **Educational Resource**: Offer well-documented code and interactive notebooks to facilitate learning and experimentation with LP techniques.
-- **Algorithm Exploration**: Allow users to experiment with different approaches to LP, including presolve techniques, revised simplex methods, and MPS file parsing.
+### Key Objectives of This Project
+- **Prototype Development**: Provide prototypes of classic and modern LP algorithms, such as the Simplex method and Interior-Point methods.
+- **Educational Resource**: Offer well-documented code and interactive notebooks to facilitate learning and experimentation.
+- **Algorithm Exploration**: Enable users to explore different LP techniques, including presolve routines, revised simplex methods, and MPS file parsing.
 
-Whether you're a beginner trying to grasp the basics of linear programming or an advanced user exploring the nuances of LP solvers, this repository offers a practical, hands-on experience.
+Whether you're a beginner learning linear programming or an advanced user exploring solver nuances, this repository provides a practical, hands-on experience.
 
-### Directory Structure
+## Directory Structure
 
-- **check**: This directory contains test scripts and example MPS and LP problem files.
-  - **problems**: Contains problems.
-    - **mps_files**: Various MPS files used for testing and benchmarking LP algorithms.
-    - **lp_files**: Contains LS files.
-  - **test**: Test scripts for validating the functionality of modules in the repository.
+### Root Directory
+- `.gitignore`: Git ignore file.
+- `AUTHORS`: List of contributors to the repository.
+- `CODE_OF_CONDUCT.md`: Code of Conduct for contributors.
+- `CONTRIBUTING.md`: Guidelines for contributing to the project.
+- `LICENSE.txt`: The project's license file.
+- `Project.toml`: The Julia project configuration file.
+- `README.md`: This readme file.
 
-- **docs**: Documentation and diagrams related to the project.
-  - **build**: Contains the complied doctumentation.
-  - **LaTeX**: LaTeX files for reports, documentation, or other typesetting-related content.
-  - **src**: Contains markdown files for documetation.
-  - `make.jl`: Script that runs the julia documenter.
+### check
+- **problems**: Contains LP and MPS files used for testing.
+  - `lp_files`: LP problem files like `1449a.lp`, `juLinear_ex1.lp`, etc.
+  - `mps_files`: MPS problem files like `blend.mps`, `small_mip.mps`, etc.
+- **test**: Test scripts for validating functionality.
+  - `README.md`: Documentation for the test suite.
+  - `test_framework.jl`: Main test framework.
+  - `test_helpers.jl`: Helper functions for tests.
+  - `test_mps.jl`: Tests for MPS file reading.
+  - `test_read_LP.jl`: Tests for LP file reading.
+  - `test_read_mps.jl`: Additional tests for MPS file reading.
 
-- **res**: Contains all static images.
-  - **diagrams**: Visual representations, including PNGs and SVGs, supporting the project's documentation.
+### docs
+- **LaTeX**: LaTeX documentation and reports.
+  - `LP_Formulation.tex`, `sources.bib`: LaTeX files for reports.
+- **build**: Compiled documentation generated using `Documenter.jl`.
+- **src**: Markdown files used for documentation.
+  - `lp_presolve.md`, `lp_problem.md`, etc.
+- `make.jl`: Script to generate the documentation.
 
-- **src**: Julia source code for the LP solver.
-  - `lp_constants.jl`: Constants used across various modules.
-  - `lp_presolve.jl`: Functions for presolving LP problems.
-  - `lp_problem.jl`: Defines the data structure of linear programming problems.
-  - `lp_read_mps.jl`: Functions for reading and parsing MPS files.
-  - `lp_read_mps_mip.jl`: Functions for reading and parsing MPS files for MIP problems.
-  - `lp_revised_simplex.jl`: Revised simplex solver implementation.
-  - `lp_standard_form_converter.jl`: Converts LP problems to standard form by adding slack variables.
-  - `lp_utils.jl`: Utility functions used throughout the project.
-  - `juLinear.jl`: Main LP solver script with command-line argument support.
+### nb
+- **Jupyter Notebooks**: Interactive notebooks exploring LP concepts.
+  - `lp_MIP_notebook.ipynb`: Mixed Integer Programming notebook.
+  - `lp_revised_simplex_notebook.ipynb`: Revised Simplex method notebook.
+  - `lp_interior_point_notebook.ipynb`: Interior point method exploration.
+  - `test_o1_revised_simplex.ipynb`: Revised simplex method using OpenAI model.
 
-- **nb**: Jupyter notebooks for interactive exploration, development, and demonstration of LP concepts and algorithms.
-  - `lp_claude_revised_simplex.ipynb`: Demonstration of the revised simplex method.
-  - `lp_interior_point_notebook.ipynb`: Exploration of the interior point method.
-  - `lp_llama_ipm.ipynb`: Implementation of an interior-point method for solving LP problems.
-  - `lp_mip_notebook.ipynb`: Notebook used for exploring mip problems.
-  - `lp_presolve_notebook.ipynb`: Notebook focused on presolve techniques in LP.
-  - `lp_read_LP_notebook.ipynb`: Notebook for reading and parsing LP files.
-  - `lp_read_mps_notebook.ipynb`: Interactive notebook for reading and parsing MPS files.
-  - `lp_revised_simplex_notebook.ipynb`: Exploration of the revised simplex method.
-  - `lp_simplex_tableau.ipynb`: First exploration of the simplex tableau.
-  - `test_o1_revised_simplex.ipynb`: Another attempt at the revised simplex method using open AI o1 model.
+### res
+- **diagrams**: Diagrams used in the project documentation.
+  - `Andersons-routine.svg`, `highs_presolve_routine.mmd`: Diagrams and mermaid files for visualizing LP methods.
 
-- **tools**: Additional scripts and tools supporting the main codebase, such as analysis scripts.
+### src
+- **Julia Source Code**: Core modules for LP problem solving.
+  - `juLinear.jl`: Main LP solver script with command-line support.
+  - `lp_constants.jl`: Constants used across modules.
+  - `lp_presolve.jl`: Presolve routines for preprocessing LP problems.
+  - `lp_problem.jl`: Defines the LP problem data structure.
+  - `lp_read_mps.jl`, `lp_read_LP.jl`: MPS and LP file parsers.
+  - `lp_revised_simplex.jl`: Revised simplex solver.
+  - `lp_standard_form_converter.jl`: Converts LP problems to standard form.
+  - `lp_utils.jl`: Utility functions for LP operations.
+
+### tools
+- **Utilities**: Additional scripts supporting the project.
+  - `analyse_git_logs.ipynb`: Analysis of git logs.
+  - `nb_to_jl.py`: Script to convert Jupyter notebooks to `.jl` files.
 
 ## Usage
 
@@ -89,3 +121,11 @@ Make sure to add test cases in the `check/test` directory for any new functional
 ```bash
     julia test_script.jl
 ```
+
+## Contribution Guidelines
+
+If you'd like to contribute, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for instructions. Additionally, please review the Code of Conduct to ensure you adhere to our community standards.
+
+## License
+
+This project is licensed under the terms of the MIT License. For more details, see the [LICENSE](LICENSE.txt).
