@@ -4,20 +4,14 @@ using Test
 using LinearAlgebra
 using SparseArrays
 
-# Add the current directory to LOAD_PATH to access test_helpers
+# Include test_helpers module
 push!(LOAD_PATH, abspath(@__DIR__))
-using test_helpers  # Imports exported functions: test_general_structure, test_specific_values
+using test_helpers  # Access exported functions from test_helpers
 
-push!(LOAD_PATH, abspath(@__DIR__, "..", "..", "src"))
+# Include lp_problem and lp_read_LP modules
+push_directory_to_load_path(:src)
 using lp_problem
 using lp_read_mps
-
-# Constants
-const TEST_DIR = @__DIR__
-const PROBLEMS_DIR = joinpath(TEST_DIR, "..", "..", "check", "problems", "mps_files")
-
-# Helper function to get the full path of an MPS file
-get_full_path(filename::String) = abspath(joinpath(PROBLEMS_DIR, filename))
 
 # List of MPS files to test
 const MPS_FILES = [
@@ -71,7 +65,7 @@ const EXPECTED_LP_PROBLEMS = Dict(
     for file in MPS_FILES
         @testset "Tests for $file" begin
             # Read the LPProblem from the MPS file
-            lp = read_mps_from_file(get_full_path(file))
+            lp = read_mps_from_file(get_problems_path(file))
             
             # Test the general structure using the helper function
             test_general_structure(lp)
