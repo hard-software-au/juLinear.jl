@@ -11,14 +11,74 @@ module test_helpers
     using lp_problem  # Ensure lp_problem is accessible
 
     # Export functions
-    export test_general_structure, test_specific_values
+    export test_general_structure, test_specific_values, get_problems_path, get_src_path, push_directory_to_load_path
 
-    # Constants
-    const TEST_DIR = @__DIR__
-    const PROBLEMS_DIR = joinpath(TEST_DIR, "..", "..", "check", "problems", "lp_files")
 
-    # Helper function to get full path of an LP file
-    get_full_path(filename::String) = abspath(joinpath(PROBLEMS_DIR, filename))
+    # Function to get the base directory (lp_code)
+    function get_base_dir()
+        dir = abspath(@__DIR__)
+        while basename(dir) != "lp_code"
+            parent_dir = dirname(dir)
+            if parent_dir == dir
+                error("Could not locate the base directory for the lp_code/ repository.")
+            end
+            dir = parent_dir
+        end
+        return dir
+    end
+
+    BASE_DIR =get_base_dir()
+
+    const PATHS = Dict(
+    :base => BASE_DIR,
+    :check => abspath(joinpath(BASE_DIR, "check")),
+    :test => abspath(joinpath(BASE_DIR, "check", "test")),
+    :problems => abspath(joinpath(BASE_DIR, "check", "problems")),
+    :problems_lp => abspath(joinpath(BASE_DIR, "check", "problems", "lp_files")),
+    :problems_mps => abspath(joinpath(BASE_DIR, "check", "problems", "mps_files")),
+    :src => abspath(joinpath(BASE_DIR, "src")),
+    :docs => abspath(joinpath(BASE_DIR, "docs")),
+    :nb => abspath(joinpath(BASE_DIR, "nb")),
+    :res => abspath(joinpath(BASE_DIR, "res")),
+    :tools => abspath(joinpath(BASE_DIR, "tools"))
+)
+
+    # Function to get a directory path without changing the current working directory
+    function get_directory(level::Symbol)
+        if haskey(PATHS, level)
+            target_dir = PATHS[level]
+            if isdir(target_dir)
+                return target_dir
+            else
+                error("Directory $target_dir does not exist.")
+            end
+        else
+            # error("Invalid level: $level. Available levels are: $(join(collect(keys(PATHS)), \", \")).")
+        end
+    end
+
+    # Function to push the directory to LOAD_PATH
+    function push_directory_to_load_path(level::Symbol)
+        dir = get_directory(level)
+        if dir ∉ LOAD_PATH
+            push!(LOAD_PATH, dir)
+            println("Pushed directory $dir to LOAD_PATH.")
+        else
+            println("Directory $dir is already in LOAD_PATH.")
+        end
+    end
+
+    # Returns the problem path
+    function get_problems_path(filename::String; dirs=["lp_files", "mps_files"])
+        for dir in dirs
+            path = abspath(joinpath(PATHS[:problems], dir, filename))
+            if isfile(path)
+                return path
+            end
+        end
+        # error("File $filename not found in specified directories: $(join(dirs, \", \")).")
+    end
+
 
     # Checks the structure and consistency of the LPProblem
     function test_general_structure(lp::LPProblem)
