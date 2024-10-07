@@ -4,7 +4,6 @@ using SparseArrays
 
 # Export the LPProblem struct
 export LPProblem
-export MIPProblem
 export PreprocessedLPProblem
 
 ##############################################################################
