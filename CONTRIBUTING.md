@@ -65,8 +65,7 @@ You can raise issues in the normal way via [GitHub Issues](https://github.com/ju
   - Any additional context or details that may be helpful for reviewers.
   - Steps to reproduce the issue (if it's a bug fix).
   - Details on any new tests or validation done for the changes.
-  - Click "Create pull request" to submit your PR for review.
-- Once submitted, the project maintainers will review your PR and may request further changes or approve it for merging into the main branch.
+  - Click **"Create pull request"** to submit your PR for review.
 
 #### 6. Review Process
 - After opening a pull request, one of the project maintainers will review it. You may receive feedback or requests for changes, so be prepared for a collaborative process.
