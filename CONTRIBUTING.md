@@ -54,12 +54,19 @@ You can raise issues in the normal way via [GitHub Issues](https://github.com/ju
 
    ```bash
    git push origin YOUR-BRANCH-NAME
-- In your PR description, provide:
 
+- After pushing, follow these steps to open a Pull Request (PR) to the main branch of the original repository:
+
+  - Go to your forked repository on GitHub (https://github.com/YOUR-USERNAME/juLinear.jl).
+  - You should see a prompt at the top of the repository page suggesting to compare and open a Pull Request for the recently pushed branch. Click **"Compare & pull request"**.
+  - On the "Open a Pull Request" page, ensure the base repository is set to the original repository (ORIGINAL-REPO-NAME/main), and the compare branch is your forked branch (YOUR-USERNAME/YOUR-BRANCH-NAME).
+- In your PR description, provide:
   - A summary of what your changes address (linking any related issues if applicable).
   - Any additional context or details that may be helpful for reviewers.
   - Steps to reproduce the issue (if it's a bug fix).
   - Details on any new tests or validation done for the changes.
+  - Click "Create pull request" to submit your PR for review.
+- Once submitted, the project maintainers will review your PR and may request further changes or approve it for merging into the main branch.
 
 #### 6. Review Process
 - After opening a pull request, one of the project maintainers will review it. You may receive feedback or requests for changes, so be prepared for a collaborative process.
