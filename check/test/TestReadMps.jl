@@ -62,7 +62,7 @@ const EXPECTED_LP_PROBLEMS = Dict(
     for file in MPS_FILES
         @testset "Tests for $file" begin
             # Read the LPProblem from the MPS file
-            lp = read_mps_from_file(get_problems_path(file))
+            lp = read_mps(get_problems_path(file))
 
             # Test the general structure using the helper function
             test_general_structure(lp)
