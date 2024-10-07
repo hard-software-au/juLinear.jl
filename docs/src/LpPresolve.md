@@ -1,37 +1,43 @@
-# lp_presolve Module
+# LpPresolve Module
 
-The `lp_presolve` module provides several utility functions for preprocessing linear programming problems by removing redundant rows, columns, and detecting linearly dependent constraints.
+The `LpPresolve` module provides several utility functions for preprocessing linear programming problems by removing redundant rows, columns, and detecting linearly dependent constraints.
 
 ## Functions
 
 ### `lp_remove_zero_rows`
 
 ```@docs
-lp_presolve.lp_remove_zero_rows
+LpPresolve.lp_remove_zero_rows
 ```
 
 ### `lp_remove_row_singletons`
 
 ```@docs
-lp_presolve.lp_remove_row_singletons
+LpPresolve.lp_remove_row_singletons
+```
+
+### `lp_detect_and_remove_fixed_varibles`
+
+```@docs
+LpPresolve.lp_detect_and_remove_fixed_variables
 ```
 
 ### `lp_remove_zero_columns`
 
 ```@docs
-lp_presolve.lp_remove_zero_columns
+LpPresolve.lp_remove_zero_columns
 ```
 
 ### `lp_remove_linearly_dependent_rows`
 
 ```@docs
-lp_presolve.lp_remove_linearly_dependent_rows
+LpPresolve.lp_remove_linearly_dependent_rows
 ```
 
 ### `presolve_lp`
 
 ```@docs
-lp_presolve.presolve_lp
+LpPresolve.presolve_lp
 ```
 
 ## Examples

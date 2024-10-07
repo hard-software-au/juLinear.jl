@@ -1,16 +1,16 @@
-# `lp_revised_simplex` Module
+# `LpRevisedSimplex` Module
 
-The `lp_revised_simplex` module provides an implementation of the revised simplex method for solving linear programming (LP) problems.
+The `LpRevisedSimplex` module provides an implementation of the revised simplex method for solving linear programming (LP) problems.
 
 ## Functions
 
-### `revised_simplex`
+### `RevisedSimplex`
 
 ```@docs
-lp_revised_simplex.revised_simplex
+LpRevisedSimplex.revised_simplex
 ```
 
-The `revised_simplex` function solves a linear programming problem using the revised simplex method. It takes an `LPProblem` struct as input, converts it to standard form, and iteratively finds the optimal solution using the simplex algorithm.
+The `RevisedSimplex` function solves a linear programming problem using the revised simplex method. It takes an `LPProblem` struct as input, converts it to standard form, and iteratively finds the optimal solution using the simplex algorithm.
 
 ### Arguments
 

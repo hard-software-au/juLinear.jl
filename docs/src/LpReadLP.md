@@ -10,6 +10,11 @@ The `LpReadLP` module provides functions for reading linear programming problems
 LpReadLP.read_lp
 ```
 
+### write_lp
+```@docs
+LpReadLP.write_lp
+```
+
 
 ## Further Information
 

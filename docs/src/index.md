@@ -4,17 +4,17 @@ Welcome to the documentation for this project, which provides tools and utilitie
 
 ## Modules
 
-- [lp\_presolve](lp_presolve.md): This module provides functions for preprocessing LP problems, such as removing zero rows, zero columns, and linearly dependent rows.
+- [LpPresolve](LpPresolve.md): This module provides functions for preprocessing LP problems, such as removing zero rows, zero columns, and linearly dependent rows.
   
-- [lp\_problem](lp_problem.md): This module defines the data structures for representing LP and MIP problems, including the `LPProblem`, `MIPProblem`, and `PreprocessedLPProblem` structs.
+- [LpProblem](LpProblem.md): This module defines the data structures for representing LP and MIP problems, including the `LPProblem` and `PreprocessedLPProblem` structs.
 
-- [lp\_read\_mps](lp_read_mps.md): This module contains functions for reading linear programming (LP) and mixed integer programming (MIP) problems from MPS (Mathematical Programming System) files. It supports reading from both file and string formats.
+- [LpReadMPS](LpReadMPS.md): This module contains functions for reading linear programming (LP) problems from MPS (Mathematical Programming System) files. It supports reading from both file and string formats.
 
-- [lp\_revised\_simplex](lp_revised_simplex.md): This module implements the revised simplex method for solving LP problems. It handles problem conversion to standard form, iteration over basis variables, and optimization checks.
+- [LpRevisedSimplex](LpRevisedSimplex.md): This module implements the revised simplex method for solving LP problems. It handles problem conversion to standard form, iteration over basis variables, and optimization checks.
 
-- [lp\_standard\_form\_converter](lp_standard_form_converter.md): This module provides functions for converting LP and MIP problems into their standard forms, including handling constraints and slack variables.
+- [LpStandardFormConverter](LpStandardFormConverter.md): This module provides functions for converting LP and MIP problems into their standard forms, including handling constraints and slack variables.
 
-- [lp\_solver](lp_solver.md): This module implements a commandline inteface for this linear program solver.
+- [juLinear](juLinear.md): This module implements a commandline inteface for this linear program solver.
 ## Getting Started
 
 To begin using the tools in this project, follow these steps:
@@ -35,7 +35,7 @@ For more detailed information, explore the individual modules and example usage.
 
 For any questions or contributions, please refer to the project's [GitHub repository](https://github.com/your_username/your_project).
 
-This is a code repository of HARDsoftware 
+This is a code repository of HARD software 
 
 ![HARDsoftware](hslogo_presentation.png)
 
