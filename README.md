@@ -98,7 +98,7 @@ First, navigate to the `src` folder in the terminal and run the following comman
 ```
 
 ### Command Line Options
-- `--filename`: Path to the MPS file containing the LP problem.
+- `--filename`: Path to the MPS or LP file containing the LP problem.
 - `--min`: Solve the problem as a minimization (default).
 - `--max`: Solve the problem as a maximization.
 - `--simplex`: Use the simplex method for solving the LP.
@@ -119,7 +119,7 @@ To add a new Julia module, place your `.jl` file in the `src` directory and upda
 
 Make sure to add test cases in the `check/test` directory for any new functionality you introduce. You can run the tests using:
 ```bash
-    julia test_script.jl
+    julia test_framework.jl
 ```
 
 ## Contribution Guidelines
