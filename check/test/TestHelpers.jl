@@ -1,6 +1,6 @@
 # test_helpers.jl
 
-module test_helpers
+module TestHelpers
 
 using Test  # Import the Test module for @test macros
 using LinearAlgebra
@@ -8,7 +8,7 @@ using SparseArrays
 
 # Add the source folder to the load path
 push!(LOAD_PATH, abspath(@__DIR__, "..", "..", "src"))
-using lp_problem  # Ensure lp_problem is accessible
+using LpProblem  # Ensure lp_problem is accessible
 
 # Export functions
 export test_general_structure,

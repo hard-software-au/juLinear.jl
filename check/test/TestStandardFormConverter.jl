@@ -6,13 +6,13 @@ using SparseArrays
 
 # Include test_helpers module
 push!(LOAD_PATH, abspath(@__DIR__))
-using test_helpers  # Access exported functions from test_helpers
+using TestHelpers  # Access exported functions from test_helpers
 
 # Include lp_problem and lp_read_LP modules
 push_directory_to_load_path(:src)
-using lp_problem
-using lp_standard_form_converter
-using lp_read_LP
+using LpProblem
+using LpStandardFormConverter
+using LpReadLP
 
 # List of LP files to test
 const Problems = [

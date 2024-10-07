@@ -6,12 +6,12 @@ using SparseArrays
 
 # Include test_helpers module
 push!(LOAD_PATH, abspath(@__DIR__))
-using test_helpers  # Access exported functions from test_helpers
+using TestHelpers  # Access exported functions from test_helpers
 
 # Include lp_problem and lp_read_LP modules
 push_directory_to_load_path(:src)
-using lp_problem
-using lp_read_mps
+using LpProblem
+using LpReadMPS
 
 # List of MPS files to test
 const MPS_FILES = [

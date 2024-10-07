@@ -37,7 +37,7 @@ push!(LOAD_PATH, ".")
 using test_framework
 ```
 ```julia
-run_tests(["read_mps","read_lp"])
+run_tests(["ReadMPS","ReadLp"])
 ```
 Additonally, there is a option for the verbose of test:
 ```julia
