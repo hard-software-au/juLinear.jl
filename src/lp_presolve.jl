@@ -12,7 +12,6 @@ export lp_remove_row_singletons
 export lp_remove_zero_columns
 export lp_remove_linearly_dependent_rows
 
-
 ##############################################################################
 #### lp_detect_and_remove_fixed_variables
 ##############################################################################
@@ -107,7 +106,9 @@ println(new_lp_model.var_solutions)
 - `lp_detect_and_remove_column_singletons`
 - `lp_bound_tightening`
 """
-function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
+function lp_detect_and_remove_fixed_variables(
+    lp_model::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false
+)
     # Unpack the original and reduced problems
     original_lp = lp_model.original_problem
     reduced_lp = lp_model.reduced_problem
@@ -120,7 +121,9 @@ function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; �
     is_infeasible = lp_model.is_infeasible
 
     # Detect fixed variables (where l == u)
-    fixed_vars = [i for i in 1:length(reduced_lp.vars) if abs(reduced_lp.l[i] - reduced_lp.u[i]) < ε]
+    fixed_vars = [
+        i for i in 1:length(reduced_lp.vars) if abs(reduced_lp.l[i] - reduced_lp.u[i]) < ε
+    ]
     remaining_vars_indices = setdiff(1:length(reduced_lp.vars), fixed_vars)
 
     # Store the fixed variable names and their solved values in var_solutions
@@ -130,17 +133,20 @@ function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; �
 
     # Debug statements
     if verbose
-        println("#" ^ 80)
-        println("~" ^ 80)
+        println("#"^80)
+        println("~"^80)
         println("Fixed Variable Detection")
-        println("~" ^ 80)
+        println("~"^80)
         println("Total number of variables: ", length(reduced_lp.vars))
         println("Fixed variables: ", fixed_vars)
         println("Remaining variables: ", remaining_vars_indices)
-        println("The objective coefficients after removal: ", reduced_lp.c[remaining_vars_indices])
+        println(
+            "The objective coefficients after removal: ",
+            reduced_lp.c[remaining_vars_indices],
+        )
         println("Fixed variable values (var_solutions): ", var_solutions)
-        println("~" ^ 80)
-        println("#" ^ 80)
+        println("~"^80)
+        println("#"^80)
         println()
     end
 
@@ -169,7 +175,9 @@ function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; �
             if abs(new_b[i]) > ε
                 is_infeasible = true
                 if verbose
-                    println("Infeasibility detected in constraint $i after removing fixed variables.")
+                    println(
+                        "Infeasibility detected in constraint $i after removing fixed variables.",
+                    )
                 end
                 break
             end
@@ -199,7 +207,7 @@ function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; �
         new_l,
         new_u,
         new_vars,
-        new_variable_types  # Include variable types in the new LPProblem
+        new_variable_types,  # Include variable types in the new LPProblem
     )
 
     # Return updated PreprocessedLPProblem
@@ -212,11 +220,9 @@ function lp_detect_and_remove_fixed_variables(lp_model::PreprocessedLPProblem; �
         var_solutions,
         row_scaling,
         col_scaling,
-        is_infeasible
+        is_infeasible,
     )
 end
-
-
 
 ##############################################################################
 #### lp_remove_zero_rows
@@ -312,7 +318,9 @@ end
 - `lp_detect_and_remove_row_singletons`
 - `lp_detect_and_remove_column_singletons`
 """
-function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
+function lp_remove_zero_rows(
+    preprocessed_problem::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false
+)
     # Unpack problem
     original_lp = preprocessed_problem.original_problem
     reduced_lp = preprocessed_problem.reduced_problem
@@ -341,16 +349,16 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
     end
 
     # Debug statements
-    if verbose 
-        println("#" ^ 80)
-        println("~" ^ 80)
+    if verbose
+        println("#"^80)
+        println("~"^80)
         println("Remove Zero Rows Function")
-        println("~" ^ 80)
+        println("~"^80)
         println("Total number of rows: ", size(reduced_lp.A, 1))
         println("Non-zero rows: ", non_zero_rows)
         println("Removed zero rows: ", zero_rows)
-        println("~" ^ 80)
-        println("#" ^ 80)
+        println("~"^80)
+        println("#"^80)
         println()
     end
 
@@ -359,7 +367,9 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
         if constraint_types[idx] == 'E' && abs(b[idx]) > ε
             is_infeasible = true
             if verbose
-                println("Infeasibility detected due to zero row at index $idx with non-zero RHS.")
+                println(
+                    "Infeasibility detected due to zero row at index $idx with non-zero RHS.",
+                )
             end
             break
         end
@@ -376,7 +386,7 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
             var_solutions,
             row_scaling,
             col_scaling,
-            true  # is_infeasible set to true
+            true,  # is_infeasible set to true
         )
     end
 
@@ -387,15 +397,15 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
 
     # Construct the reduced LPProblem (variables remain unchanged)
     new_reduced_lp = LPProblem(
-        reduced_lp.is_minimize, 
-        reduced_lp.c, 
-        new_A, 
-        new_b, 
-        new_constraint_types, 
-        reduced_lp.l, 
-        reduced_lp.u, 
-        reduced_lp.vars, 
-        reduced_lp.variable_types
+        reduced_lp.is_minimize,
+        reduced_lp.c,
+        new_A,
+        new_b,
+        new_constraint_types,
+        reduced_lp.l,
+        reduced_lp.u,
+        reduced_lp.vars,
+        reduced_lp.variable_types,
     )
 
     # Return the updated PreprocessedLPProblem struct
@@ -408,10 +418,9 @@ function lp_remove_zero_rows(preprocessed_problem::PreprocessedLPProblem; ε::Fl
         var_solutions,
         row_scaling,
         col_scaling,
-        is_infeasible
+        is_infeasible,
     )
 end
-
 
 ##############################################################################
 #### lp_remove_row_singletons
@@ -516,7 +525,9 @@ println(new_lp_model.var_solutions)
 - `lp_remove_zero_rows`
 - `lp_detect_and_remove_column_singletons`
 """
-function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool = false)
+function lp_remove_row_singletons(
+    lp_model::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false
+)
     # Unpack problem
     original_lp = lp_model.original_problem
     reduced_lp = lp_model.reduced_problem
@@ -594,7 +605,9 @@ function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1
             if l[var_index] > u[var_index] + ε
                 is_infeasible = true
                 if verbose
-                    println("Infeasibility detected at variable $(vars[var_index]) after processing row singleton at row $row.")
+                    println(
+                        "Infeasibility detected at variable $(vars[var_index]) after processing row singleton at row $row.",
+                    )
                 end
                 break
             end
@@ -611,7 +624,7 @@ function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1
             var_solutions,
             lp_model.row_scaling,
             lp_model.col_scaling,
-            true
+            true,
         )
     end
 
@@ -624,10 +637,10 @@ function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1
 
     # Verbose output matching previous functions
     if verbose
-        println("#" ^ 80)
-        println("~" ^ 80)
+        println("#"^80)
+        println("~"^80)
         println("Row Singleton Removal")
-        println("~" ^ 80)
+        println("~"^80)
         println("Total number of constraints: ", size(reduced_lp.A, 1))
         println("Singleton rows identified: ", singleton_rows)
         println("Removed rows: ", rows_to_remove)
@@ -635,8 +648,8 @@ function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1
         println("Variable solutions (var_solutions): ", var_solutions)
         println("Remaining variables: ", remaining_vars)
         println("Remaining constraints: ", length(remaining_rows))
-        println("~" ^ 80)
-        println("#" ^ 80)
+        println("~"^80)
+        println("#"^80)
         println()
     end
 
@@ -652,15 +665,7 @@ function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1
 
     # Construct the new LPProblem
     new_reduced_lp = LPProblem(
-        reduced_lp.is_minimize,
-        c,
-        A,
-        b,
-        constraint_types,
-        l,
-        u,
-        vars,
-        variable_types
+        reduced_lp.is_minimize, c, A, b, constraint_types, l, u, vars, variable_types
     )
 
     # Update removed rows and columns
@@ -677,10 +682,9 @@ function lp_remove_row_singletons(lp_model::PreprocessedLPProblem; ε::Float64=1
         var_solutions,
         lp_model.row_scaling,
         lp_model.col_scaling,
-        is_infeasible
+        is_infeasible,
     )
 end
-
 
 ##############################################################################
 #### lp_remove_zero_columns
@@ -778,7 +782,9 @@ println(new_preprocessed_lp.var_solutions)
 - `lp_remove_row_singletons`
 - `lp_detect_and_remove_column_singletons`
 """
-function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false)
+function lp_remove_zero_columns(
+    preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false
+)
     # Unpack the reduced problem
     reduced_lp = preprocessed_lp.reduced_problem
     A = reduced_lp.A
@@ -798,7 +804,7 @@ function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Floa
 
     # Initialize lists for variables to remove and their solutions
     vars_to_remove = Int[]
-    new_var_solutions = Dict{String, Float64}()
+    new_var_solutions = Dict{String,Float64}()
 
     # Process zero columns
     for idx in zero_columns
@@ -849,10 +855,10 @@ function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Floa
     end
 
     if verbose
-        println("#" ^ 80)
-        println("~" ^ 80)
+        println("#"^80)
+        println("~"^80)
         println("Zero Column Removal")
-        println("~" ^ 80)
+        println("~"^80)
         println("Total number of variables: ", length(vars))
         println("Zero columns identified: ", [vars[i] for i in zero_columns])
         println("Variables removed: ", [vars[i] for i in vars_to_remove])
@@ -863,8 +869,8 @@ function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Floa
             println("Variable solutions (var_solutions): ", new_var_solutions)
             println("Remaining variables: ", vars[setdiff(1:end, vars_to_remove)])
         end
-        println("~" ^ 80)
-        println("#" ^ 80)
+        println("~"^80)
+        println("#"^80)
         println()
     end
 
@@ -879,7 +885,7 @@ function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Floa
             var_solutions,  # Do not merge new_var_solutions as they may be invalid
             preprocessed_lp.row_scaling,
             preprocessed_lp.col_scaling,
-            is_infeasible
+            is_infeasible,
         )
     end
 
@@ -902,7 +908,7 @@ function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Floa
         new_l,
         new_u,
         new_vars,
-        new_variable_types
+        new_variable_types,
     )
 
     # Return the updated PreprocessedLPProblem struct
@@ -915,11 +921,9 @@ function lp_remove_zero_columns(preprocessed_lp::PreprocessedLPProblem; ε::Floa
         merge(var_solutions, new_var_solutions),
         preprocessed_lp.row_scaling,
         preprocessed_lp.col_scaling,
-        is_infeasible
+        is_infeasible,
     )
 end
-
-
 
 ##############################################################################
 #### lp_remove_linearly_dependent_rows
@@ -938,7 +942,9 @@ Removes linearly dependent rows from the constraint matrix `A` of the `Preproces
 # Returns:
 A new `PreprocessedLPProblem` with linearly dependent rows removed.
 """
-function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProblem; ε::Float64 = 1e-8, verbose::Bool = false)
+function lp_remove_linearly_dependent_rows(
+    preprocessed_lp::PreprocessedLPProblem; ε::Float64=1e-8, verbose::Bool=false
+)
     # Unpack the reduced problem
     reduced_lp = preprocessed_lp.reduced_problem
 
@@ -947,7 +953,7 @@ function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProble
 
     rows_to_check = collect(1:size(augmented_matrix, 1))  # Start with all rows to check
     removed_rows = Vector{Int}()  # List of removed rows
-    row_ratios = Dict{Int, Tuple{Int, Float64}}()  # Store ratios of removed rows
+    row_ratios = Dict{Int,Tuple{Int,Float64}}()  # Store ratios of removed rows
 
     while length(rows_to_check) > 1
         current_row_index = rows_to_check[1]
@@ -978,14 +984,14 @@ function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProble
 
     # Debug statements
     if verbose
-        println("#" ^ 80)
-        println("~" ^ 80)
+        println("#"^80)
+        println("~"^80)
         println("Remove Linearly Dependent Rows Function")
-        println("~" ^ 80)
+        println("~"^80)
         println("Removed rows: ", removed_rows)
         println("Row Ratios: ", row_ratios)
-        println("~" ^ 80)
-        println("#" ^ 80)
+        println("~"^80)
+        println("#"^80)
         println()
     end
 
@@ -1005,7 +1011,7 @@ function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProble
         reduced_lp.l,
         reduced_lp.u,
         reduced_lp.vars,
-        reduced_lp.variable_types
+        reduced_lp.variable_types,
     )
 
     # Return the updated PreprocessedLPProblem struct
@@ -1018,10 +1024,9 @@ function lp_remove_linearly_dependent_rows(preprocessed_lp::PreprocessedLPProble
         preprocessed_lp.var_solutions,
         preprocessed_lp.row_scaling,
         preprocessed_lp.col_scaling,
-        preprocessed_lp.is_infeasible
+        preprocessed_lp.is_infeasible,
     )
 end
-
 
 ##############################################################################
 ##### Main Function #####
@@ -1039,18 +1044,18 @@ Applies presolve routines to the given `LPProblem` to reduce the problem size by
 # Returns:
 A `PreprocessedLPProblem` with a reduced problem that excludes zero rows, zero columns, singleton rows, and linearly dependent rows.
 """
-function presolve_lp(lp_problem::LPProblem; verbose::Bool = false)
+function presolve_lp(lp_problem::LPProblem; verbose::Bool=false)
     # Initialize PreprocessedLPProblem
     preprocessed_lp = PreprocessedLPProblem(
         lp_problem,       # Original problem
         lp_problem,       # Reduced problem (initially same as original)
         Int[],            # No removed rows initially
         Int[],            # No removed columns initially
-        Dict{Int, Tuple{Int, Float64}}(),  # No row ratios initially
-        Dict{String, Float64}(),  # Empty variable solutions
+        Dict{Int,Tuple{Int,Float64}}(),  # No row ratios initially
+        Dict{String,Float64}(),  # Empty variable solutions
         Vector{Float64}(),  # Empty row scaling
         Vector{Float64}(),  # Empty column scaling
-        false               # No infeasibility detected initially
+        false,               # No infeasibility detected initially
     )
 
     # Apply preprocessing methods

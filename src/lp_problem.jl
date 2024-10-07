@@ -45,7 +45,7 @@ lp = LPProblem(
 struct LPProblem
     is_minimize::Bool                   # True for minimization, false for maximization
     c::Vector{Float64}                  # Objective coefficients (cᵀX)
-    A::SparseMatrixCSC{Float64, Int64}  # Constraint matrix (AX = b)
+    A::SparseMatrixCSC{Float64,Int64}  # Constraint matrix (AX = b)
     b::Vector{Float64}                  # Right-hand side vector
     constraint_types::Vector{Char}      # Constraint types ('L' ≤, 'G' ≥, 'E' =)
     l::Vector{Float64}                  # Lower bounds
@@ -53,9 +53,6 @@ struct LPProblem
     vars::Vector{String}                # Variable names
     variable_types::Vector{Symbol}      # Variable types (:Continuous, :Integer, etc.)
 end
-
-
-
 
 ##############################################################################
 #### PreprocessedLPProblem Struct
@@ -97,13 +94,11 @@ struct PreprocessedLPProblem
     reduced_problem::LPProblem        # The reduced problem after preprocessing
     removed_rows::Vector{Int}         # Indices of removed rows
     removed_cols::Vector{Int}         # Indices of removed columns (if applicable)
-    row_ratios::Dict{Int, Tuple{Int, Float64}}  # Mapping of removed rows to their corresponding row and ratio
-    var_solutions::Dict{String, Float64}  # Mapping of variable names to their solution values from any presolve procedure
+    row_ratios::Dict{Int,Tuple{Int,Float64}}  # Mapping of removed rows to their corresponding row and ratio
+    var_solutions::Dict{String,Float64}  # Mapping of variable names to their solution values from any presolve procedure
     row_scaling::Vector{Float64}  # Scaling factors for rows (optional, if scaling is applied)
     col_scaling::Vector{Float64}  # Scaling factors for columns (optional, if scaling is applied)
     is_infeasible::Bool  # Flag for infeasibility detection
 end
 
-
 end # module
-

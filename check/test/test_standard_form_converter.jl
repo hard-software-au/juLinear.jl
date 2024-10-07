@@ -21,7 +21,7 @@ const Problems = [
     "ex_9-7.lp",
     "problem.lp",
     # "test.mps",
-    "juLinear_ex1.lp"
+    "juLinear_ex1.lp",
 ]
 
 # Function to check if all constraints in an LPProblem are 'L'
@@ -34,14 +34,13 @@ function is_min(lp::LPProblem)
     return all(obj == true for obj in lp.is_minimize)
 end
 
-
 @testset "standard_form_converter Tests" begin
     # Test valid Problems
     for file in Problems
         @testset "Tests for $file" begin
             # Get the full path to the LP file
             lp_file_path = get_problems_path(file)
-            
+
             # Read the LPProblem from the LP file
             lp = read_lp(lp_file_path)
 
@@ -50,7 +49,7 @@ end
             end
 
             lp_standard_form = convert_to_standard_form(lp)
-            
+
             @testset "General structure after" begin
                 test_general_structure(lp_standard_form)
             end
@@ -61,4 +60,3 @@ end
         end
     end
 end
-        

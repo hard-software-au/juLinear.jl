@@ -11,26 +11,25 @@ include("../src/lp_standard_form_converter.jl") # Include the lp_standard_form_c
 include("../src/we_need_a_name.jl")                  # Include the lp_solver module
 
 # Build the documentation
-makedocs(
-    modules = [
+makedocs(;
+    modules=[
         lp_presolve,
         lp_problem,
         lp_read_mps,
         lp_revised_simplex,
         lp_standard_form_converter,
-        lp_solver
+        lp_solver,
     ],
-    sitename = "Julia lp_code documentation",
-    pages = [
+    sitename="Julia lp_code documentation",
+    pages=[
         "Home" => "index.md",
         "`lp_presolve`" => "lp_presolve.md",
         "`lp_problem`" => "lp_problem.md",
         "`lp_read_mps`" => "lp_read_mps.md",
         "`lp_revised_simplex`" => "lp_revised_simplex.md",
         "`lp_standard_form_converter`" => "lp_standard_form_converter.md",
-        "`lp_solver`" => "lp_solver.md"
+        "`lp_solver`" => "lp_solver.md",
     ],
-    format = Documenter.HTML(),
-    clean = true
-   )
-
+    format=Documenter.HTML(),
+    clean=true,
+)

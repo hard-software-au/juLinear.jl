@@ -61,13 +61,13 @@ If `verbose=true`, the function will print:
 4. The final solution and the optimal objective value.
 
 """
-function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool = false)
+function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool=false)
     if verbose
         println()
-        println("#" ^ 80)
-        println("~" ^ 80)
+        println("#"^80)
+        println("~"^80)
         println("revised_simplex")
-        println("~" ^ 80)
+        println("~"^80)
     end
 
     # Check for infeasibility
@@ -79,12 +79,12 @@ function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool = false)
     lp = pp.reduced_problem
 
     # Convert the reduced LP problem to standard form
-    lp = convert_to_standard_form(lp, verbose = verbose)
-    
+    lp = convert_to_standard_form(lp; verbose=verbose)
+
     # Initialize variables
     m, n = size(lp.A)
     B = collect(1:m)  # Convert the basis to a mutable vector
-    N = collect(m+1:n)  # Convert the non-basic variables to a mutable vector
+    N = collect((m + 1):n)  # Convert the non-basic variables to a mutable vector
     c = lp.c
     A = lp.A
     b = lp.b
@@ -92,15 +92,15 @@ function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool = false)
     # Set up initial basis matrix and LU factorization
     B_matrix = A[:, B]
     B_factor = lu(B_matrix)
-    
+
     iteration = 0
     max_iterations = 100  # Set an appropriate iteration limit
     while iteration < max_iterations
         iteration += 1
         if verbose
-            println("~" ^ 80)
+            println("~"^80)
             println("Iteration ", iteration)
-            println("~" ^ 80)
+            println("~"^80)
         end
 
         # Step 1: Compute basic solution
@@ -138,7 +138,7 @@ function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool = false)
             end
 
             # Step 5: Map solution back to original variables
-            final_solution = Dict{String, Float64}()
+            final_solution = Dict{String,Float64}()
             for i in 1:length(lp.vars)
                 final_solution[lp.vars[i]] = x[i]
             end
@@ -153,8 +153,8 @@ function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool = false)
                 println("Final solution and objective value")
                 println("Optimal solution: ", final_solution)
                 println("Optimal objective value: ", obj_value)
-                println("~" ^ 80)
-                println("#" ^ 80)
+                println("~"^80)
+                println("#"^80)
                 println()
             end
 
@@ -214,9 +214,7 @@ function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool = false)
         end
     end
 
-    error("Maximum iterations reached without finding an optimal solution.")
+    return error("Maximum iterations reached without finding an optimal solution.")
 end
-
-
 
 end # module lp_revised_simplex

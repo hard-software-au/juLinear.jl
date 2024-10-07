@@ -11,7 +11,6 @@ using lp_problem
 export read_file_to_string, read_mps_from_file, read_mps_from_string, read_mps_with_JuMP
 export read_mps
 
-
 ###################################################################################
 ## File methods
 ###################################################################################
@@ -49,17 +48,14 @@ function read_mps_from_file(file_path::String)
     return read_mps_from_string(mps_string)
 end
 
-
 function read_mps(file_path::String)
     mps_string = read_file_to_string(file_path)
     return read_mps_from_string(mps_string)
 end
 
-
 ###################################################################################
 ## read_mps_from_string
 ###################################################################################
-
 
 """
     read_mps_from_string(mps_string::String) -> LPProblem
@@ -74,19 +70,26 @@ This function parses a given MPS (Mathematical Programming System) formatted str
 """
 function read_mps_from_string(mps_string::String)
     lines = split(mps_string, '\n')
-    sections = Dict("NAME" => "", "ROWS" => [], "COLUMNS" => OrderedDict(), "RHS" => Dict(), "BOUNDS" => Dict())
+    sections = Dict(
+        "NAME" => "",
+        "ROWS" => [],
+        "COLUMNS" => OrderedDict(),
+        "RHS" => Dict(),
+        "BOUNDS" => Dict(),
+    )
     current_section = ""
     objective_name = ""
     is_minimize = true
     objective_set = false
     in_integer_block = false
-    variable_types = OrderedDict{String, Symbol}()
+    variable_types = OrderedDict{String,Symbol}()
 
     for line in lines
         words = split(line)
         (isempty(words) || (line[1] == '*')) && continue
 
-        if (line[1] != ' ') && words[1] in ["NAME", "OBJSENSE", "ROWS", "COLUMNS", "RHS", "BOUNDS", "ENDATA"]
+        if (line[1] != ' ') &&
+            words[1] in ["NAME", "OBJSENSE", "ROWS", "COLUMNS", "RHS", "BOUNDS", "ENDATA"]
             current_section = words[1]
             continue
         end
@@ -232,25 +235,15 @@ function read_mps_from_string(mps_string::String)
 
     # Return an LPProblem struct
     lp_problem = LPProblem(
-        is_minimize,
-        c,
-        A,
-        b,
-        constraint_types,
-        lb,
-        ub,
-        vars,
-        variable_types_array
+        is_minimize, c, A, b, constraint_types, lb, ub, vars, variable_types_array
     )
 
     return lp_problem
 end
 
-
 ####################################################################################
 # JuMP based reader
 ####################################################################################
-
 
 """
     get_variable_type(var) -> String
@@ -283,7 +276,6 @@ function get_variable_type(var)
     end
 end
 
-
 """
     read_mps_with_JuMP(file_path::String) -> LPProblem
 
@@ -309,7 +301,9 @@ function read_mps_with_JuMP(file_path::String)
     variable_names = [name(var) for var in variables]
 
     # Extract the objective function (assumes a linear objective)
-    objective_function = MOI.get(model.moi_backend, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    objective_function = MOI.get(
+        model.moi_backend, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+    )
     objective_coeffs = zeros(Float64, length(variables))
 
     # Populate the objective coefficients array
@@ -321,9 +315,24 @@ function read_mps_with_JuMP(file_path::String)
     is_minimize = MOI.get(model.moi_backend, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 
     # Separate constraints by type
-    less_than_constraints = MOI.get(model.moi_backend, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
-    greater_than_constraints = MOI.get(model.moi_backend, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
-    equal_to_constraints = MOI.get(model.moi_backend, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}())
+    less_than_constraints = MOI.get(
+        model.moi_backend,
+        MOI.ListOfConstraintIndices{
+            MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}
+        }(),
+    )
+    greater_than_constraints = MOI.get(
+        model.moi_backend,
+        MOI.ListOfConstraintIndices{
+            MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}
+        }(),
+    )
+    equal_to_constraints = MOI.get(
+        model.moi_backend,
+        MOI.ListOfConstraintIndices{
+            MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}
+        }(),
+    )
 
     constraint_matrix_rows = Int64[]
     constraint_matrix_cols = Int64[]
@@ -335,7 +344,7 @@ function read_mps_with_JuMP(file_path::String)
     for con in less_than_constraints
         func = MOI.get(model.moi_backend, MOI.ConstraintFunction(), con)
         set = MOI.get(model.moi_backend, MOI.ConstraintSet(), con)
-        
+
         for term in func.terms
             push!(constraint_matrix_rows, con.value)  # Constraint index
             push!(constraint_matrix_cols, term.variable.value)  # Variable index
@@ -349,7 +358,7 @@ function read_mps_with_JuMP(file_path::String)
     for con in greater_than_constraints
         func = MOI.get(model.moi_backend, MOI.ConstraintFunction(), con)
         set = MOI.get(model.moi_backend, MOI.ConstraintSet(), con)
-        
+
         for term in func.terms
             push!(constraint_matrix_rows, con.value)  # Constraint index
             push!(constraint_matrix_cols, term.variable.value)  # Variable index
@@ -363,7 +372,7 @@ function read_mps_with_JuMP(file_path::String)
     for con in equal_to_constraints
         func = MOI.get(model.moi_backend, MOI.ConstraintFunction(), con)
         set = MOI.get(model.moi_backend, MOI.ConstraintSet(), con)
-        
+
         for term in func.terms
             push!(constraint_matrix_rows, con.value)  # Constraint index
             push!(constraint_matrix_cols, term.variable.value)  # Variable index
@@ -374,7 +383,13 @@ function read_mps_with_JuMP(file_path::String)
     end
 
     # Convert to sparse matrix
-    constraint_matrix = sparse(constraint_matrix_rows, constraint_matrix_cols, constraint_matrix_vals, length(rhs_values), length(variables))
+    constraint_matrix = sparse(
+        constraint_matrix_rows,
+        constraint_matrix_cols,
+        constraint_matrix_vals,
+        length(rhs_values),
+        length(variables),
+    )
 
     # Define lower and upper bounds
     lower_bounds = fill(0.0, length(variables))  # Default lower bounds (0.0)
@@ -398,11 +413,10 @@ function read_mps_with_JuMP(file_path::String)
         lower_bounds,
         upper_bounds,
         variable_names,
-        variable_types
+        variable_types,
     )
 
     return lp_problem
 end
-
 
 end # module

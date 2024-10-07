@@ -19,7 +19,7 @@ const LP_FILES = [
     "ex_9-7.lp",
     "problem.lp",
     # "test.lp",
-    "juLinear_ex1.lp"
+    "juLinear_ex1.lp",
 ]
 
 const CORRUPT_LP_FILES = ["test.lp"]
@@ -30,17 +30,17 @@ const EXPECTED_LP_PROBLEMS = Dict(
         false,  # false indicates a maximization problem
         [4.0, 3.0, 1.0, 7.0, 6.0],  # Objective coefficients: [X1, X2, X3, X4, X5]
         sparse([
-            1.0  2.0  3.0  1.0 -3.0;  # ROW1 coefficients for [X1, X2, X3, X4, X5]
-            2.0 -1.0  2.0  2.0  1.0;  # ROW2 coefficients
-            -3.0 2.0  1.0 -1.0  2.0   # ROW3 coefficients
+            1.0 2.0 3.0 1.0 -3.0  # ROW1 coefficients for [X1, X2, X3, X4, X5]
+            2.0 -1.0 2.0 2.0 1.0  # ROW2 coefficients
+            -3.0 2.0 1.0 -1.0 2.0   # ROW3 coefficients
         ]),
         [9.0, 10.0, 11.0],  # RHS values for [ROW1, ROW2, ROW3]
         ['L', 'L', 'L'],     # Constraint types: all are 'Less than or equal to'
         [0.0, 0.0, 0.0, 0.0, 0.0],  # Lower bounds for [X1, X2, X3, X4, X5]
         [Inf, Inf, Inf, Inf, Inf],  # Upper bounds for [X1, X2, X3, X4, X5]
         ["X1", "X2", "X3", "X4", "X5"],  # Variable names
-        [:Continuous, :Continuous, :Continuous, :Continuous, :Continuous]  # Variable types
-    )
+        [:Continuous, :Continuous, :Continuous, :Continuous, :Continuous],  # Variable types
+    ),
     # Add more expected LPProblem instances for other LP files as needed
 )
 
@@ -51,14 +51,14 @@ const EXPECTED_LP_PROBLEMS = Dict(
         @testset "Tests for $file" begin
             # Get the full path to the LP file
             lp_file_path = get_problems_path(file)
-            
+
             # Read the LPProblem from the LP file
             lp = read_lp(lp_file_path)
-            
+
             @testset "General structure" begin
                 test_general_structure(lp)
             end
-            
+
             if haskey(EXPECTED_LP_PROBLEMS, file)
                 @testset "Specific values" begin
                     expected_lp = EXPECTED_LP_PROBLEMS[file]
@@ -67,12 +67,12 @@ const EXPECTED_LP_PROBLEMS = Dict(
             end
         end
     end
-    
+
     # Test corrupt LP files
     for file in CORRUPT_LP_FILES
         @testset "Corrupt LP File: $file" begin
             corrupt_file_path = get_problems_path(file)
-            
+
             # Attempt to read the corrupt LP file and expect an ArgumentError
             @test_throws ArgumentError read_lp(corrupt_file_path)
         end

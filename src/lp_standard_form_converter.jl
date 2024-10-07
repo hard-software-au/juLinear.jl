@@ -76,13 +76,13 @@ standard_lp = convert_to_standard_form(lp)
 ```
 In the example, the original mazimization problem is converted to a minimization problem, whith slack varibles for each ≤ contraint to convert the problem into standard form.
 """
-function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProblem
+function convert_to_standard_form(lp::LPProblem; verbose::Bool=false)::LPProblem
     if verbose
         println()
-        println("#" ^ 80)
-        println("~" ^ 80)
+        println("#"^80)
+        println("~"^80)
         println("Starting conversion to standard form...")
-        println("~" ^ 80)
+        println("~"^80)
     end
 
     # Unpack LP problem components
@@ -95,7 +95,7 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProbl
     u = copy(lp.u)
     vars = copy(lp.vars)
     variable_types = copy(lp.variable_types)
-    
+
     m, n = size(A)  # Number of constraints and variables
 
     # Initialize counts and new structures
@@ -116,7 +116,7 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProbl
         println("Constraint types: ", constraint_types)
         println("Variable lower bounds (l): ", l)
         println("Variable upper bounds (u): ", u)
-        println("-" ^ 80)
+        println("-"^80)
     end
 
     # Step 1: Convert maximization to minimization (if necessary)
@@ -124,9 +124,11 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProbl
         c = -c
         is_minimize = true
         if verbose
-            println("Converted maximization problem to minimization by negating the objective coefficients.")
+            println(
+                "Converted maximization problem to minimization by negating the objective coefficients.",
+            )
             println("New objective function coefficients (c): ", c)
-            println("-" ^ 80)
+            println("-"^80)
         end
     end
 
@@ -148,7 +150,7 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProbl
                 println("Updated lower bound l[$j]: ", l[j])
                 println("Updated upper bound u[$j]: ", u[j])
                 println("Adjusted RHS vector (b): ", b)
-                println("-" ^ 80)
+                println("-"^80)
             end
         end
     end
@@ -208,7 +210,7 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProbl
 
     # Final verbose output
     if verbose
-        println("-" ^ 80)
+        println("-"^80)
         println("Final problem in standard form:")
         println("Objective function coefficients (c): ", c)
         println("Constraint matrix (A):\n", Matrix(A))
@@ -218,9 +220,9 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProbl
         println("Variable types: ", variable_types)
         println("Variable lower bounds (l): ", l)
         println("Variable upper bounds (u): ", u)
-        println("~" ^ 80)
+        println("~"^80)
         println("Conversion to standard form completed.")
-        println("#" ^ 80)
+        println("#"^80)
         println()
     end
 
@@ -234,7 +236,7 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool = false)::LPProbl
         l,                    # Updated lower bounds
         u,                    # Updated upper bounds
         vars,                 # Updated variable names
-        variable_types        # Updated variable types
+        variable_types,        # Updated variable types
     )
 end
 

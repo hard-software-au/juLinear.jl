@@ -6,10 +6,8 @@ using Test
 push!(LOAD_PATH, abspath(@__DIR__))
 using test_helpers  # Access exported functions from test_helpers
 
-
 # Export functions and constants so they can be used outside the module
 export run_tests, create_module_tests
-
 
 """
     run_tests(test_modules::Vector{String}; verbose::Bool=false)
@@ -42,7 +40,6 @@ function run_tests(test_modules::Vector{String}; verbose::Bool=false)
     end
 end
 
-
 """
     create_module_tests(module_name::String)
 
@@ -60,7 +57,9 @@ function create_module_tests(module_name::String)
     filename = joinpath(@__DIR__, "test_$(module_name).jl")
     open(filename, "w") do file
         # Write the test file content with header, blank lines, and test structure
-        write(file, """
+        write(
+            file,
+            """
 # test_$module_name.jl
 
 using Test
@@ -83,10 +82,10 @@ using lp_$module_name
     # for test in Tests
     # put your test logic here
 end
-        """)
+        """,
+        )
     end
-    println("Created test file: $filename")
+    return println("Created test file: $filename")
 end
-
 
 end  # module TestFramework

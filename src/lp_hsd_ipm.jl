@@ -100,15 +100,9 @@ function hsdLPsolver(lp::LPProblem; toler=1e-8, beta=0.995, verbose=false)
             hcat(-A', zeros_n_n, -c, -I(n), c),
             hcat(b', -c', zeros_1_1, zeros_1_n, zeros_1_1),
             hcat(Z, zeros_n_m, zeros_n_1, X, zeros_n_1),
-            hcat(zeros_1_m, c', zeros_1_1, zeros_1_n, zeros_1_1)
+            hcat(zeros_1_m, c', zeros_1_1, zeros_1_n, zeros_1_1),
         )
-        rhs = vcat(
-            rp,
-            rD,
-            rτ,
-            -X * z + μ * ones(n),
-            -τ * κ + μ
-        )
+        rhs = vcat(rp, rD, rτ, -X * z + μ * ones(n), -τ * κ + μ)
 
         if verbose
             println("KKT Matrix (lhs):")
@@ -122,46 +116,55 @@ function hsdLPsolver(lp::LPProblem; toler=1e-8, beta=0.995, verbose=false)
 
         # Correct the slicing of the solution vector to match the problem dimensions
         dy = d[1:m]
-        dx = d[m+1:m+n]
-        dτ = d[m+n+1]
-        dz = d[m+n+2:m+2*n+1]
+        dx = d[(m + 1):(m + n)]
+        dτ = d[m + n + 1]
+        dz = d[(m + n + 2):(m + 2 * n + 1)]
         dκ = d[end]
 
         # Predictor-corrector: take affine step and use it to determine centering parameter γ
         α_affine_x = isempty(dx[dx .< 0]) ? Inf : minimum(-x[dx .< 0] ./ dx[dx .< 0])
         α_affine_z = isempty(dz[dz .< 0]) ? Inf : minimum(-z[dz .< 0] ./ dz[dz .< 0])
         α_affine = minimum([
-            α_affine_x,
-            α_affine_z,
-            dτ < 0 ? -τ / dτ : Inf,
-            dκ < 0 ? -κ / dκ : Inf
+            α_affine_x, α_affine_z, dτ < 0 ? -τ / dτ : Inf, dκ < 0 ? -κ / dκ : Inf
         ])
         α_affine *= beta
 
-        μ_affine = (dot(x + α_affine * dx, z + α_affine * dz) + (τ + α_affine * dτ) * (κ + α_affine * dκ)) / (n + 1)
+        μ_affine =
+            (
+                dot(x + α_affine * dx, z + α_affine * dz) +
+                (τ + α_affine * dτ) * (κ + α_affine * dκ)
+            ) / (n + 1)
         γ = (μ_affine / μ)^3
 
         # Corrector step
         rhs_corrector = copy(rhs)
-        rhs_corrector[m+n+2:m+2*n+1] .= -X * z + γ * μ * ones(n)
+        rhs_corrector[(m + n + 2):(m + 2 * n + 1)] .= -X * z + γ * μ * ones(n)
         rhs_corrector[end] = -τ * κ + γ * μ
 
         # Solve for the corrector direction
         d_corrector = lhs \ rhs_corrector
         dy_corr = d_corrector[1:m]
-        dx_corr = d_corrector[m+1:m+n]
-        dτ_corr = d_corrector[m+n+1]
-        dz_corr = d_corrector[m+n+2:m+2*n+1]
+        dx_corr = d_corrector[(m + 1):(m + n)]
+        dτ_corr = d_corrector[m + n + 1]
+        dz_corr = d_corrector[(m + n + 2):(m + 2 * n + 1)]
         dκ_corr = d_corrector[end]
 
         # Update variables with the corrected step size
-        α_x_corr = isempty(dx_corr[dx_corr .< 0]) ? Inf : minimum(-x[dx_corr .< 0] ./ dx_corr[dx_corr .< 0])
-        α_z_corr = isempty(dz_corr[dz_corr .< 0]) ? Inf : minimum(-z[dz_corr .< 0] ./ dz_corr[dz_corr .< 0])
+        α_x_corr = if isempty(dx_corr[dx_corr .< 0])
+            Inf
+        else
+            minimum(-x[dx_corr .< 0] ./ dx_corr[dx_corr .< 0])
+        end
+        α_z_corr = if isempty(dz_corr[dz_corr .< 0])
+            Inf
+        else
+            minimum(-z[dz_corr .< 0] ./ dz_corr[dz_corr .< 0])
+        end
         α = minimum([
             α_x_corr,
             α_z_corr,
             dτ_corr < 0 ? -τ / dτ_corr : Inf,
-            dκ_corr < 0 ? -κ / dκ_corr : Inf
+            dκ_corr < 0 ? -κ / dκ_corr : Inf,
         ])
         α *= beta
 

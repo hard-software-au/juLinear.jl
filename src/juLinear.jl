@@ -16,7 +16,6 @@ using lp_read_mps
 using lp_revised_simplex
 using lp_standard_form_converter
 
-
 """
     parse_commandline() -> Dict
 
@@ -39,32 +38,31 @@ function parse_commandline()
     # Define the argument table
     @add_arg_table! s begin
         "--filename", "-f"
-            help = "Path to the problem file (LP or MPS format)"
-            default = "/Users/roryyarr/Desktop/Linear Programming/lp_code/check/problems/mps_files/ex_9-7.mps"
-            arg_type = String
-            required = false
-        
+        help = "Path to the problem file (LP or MPS format)"
+        default = "/Users/roryyarr/Desktop/Linear Programming/lp_code/check/problems/mps_files/ex_9-7.mps"
+        arg_type = String
+        required = false
+
         "--interior", "-i"
-            help = "Use interior point method (LP only)"
-            action = :store_true
-        
+        help = "Use interior point method (LP only)"
+        action = :store_true
+
         "--no_presolve"
-            help = "Do not presolve (default is false)"
-            action = :store_true
-        
+        help = "Do not presolve (default is false)"
+        action = :store_true
+
         "--simplex", "-s"
-            help = "Use simplex method (default)"
-            action = :store_true
-        
+        help = "Use simplex method (default)"
+        action = :store_true
+
         "--verbose", "-v"
-            help = "Verbose output"
-            action = :store_true
+        help = "Verbose output"
+        action = :store_true
     end
 
     # Parse the command-line arguments
     return parse_args(s)
 end
-
 
 """
     load_lp_problem_from_lp(filename::String) -> LPProblem
@@ -82,7 +80,7 @@ lp = load_lp_problem_from_lp("problem.lp")
 """
 function load_lp_problem(filename::String)
     println("Loading LP problem from file: $filename")
-    
+
     # Determine file extension and call the appropriate reader
     if endswith(filename, ".lp")
         lp = read_lp(filename)  # Assuming read_lp is defined in lp_read_LP
@@ -91,7 +89,7 @@ function load_lp_problem(filename::String)
     else
         error("Unsupported file format. Please provide a .lp or .mps file.")
     end
-    
+
     return lp
 end
 
@@ -111,10 +109,12 @@ function handle_lp_operations(parsed_args)
 
     if parsed_args["no_presolve"]
         println("Skipping presolve step")
-        preprocessed_problem = PreprocessedLPProblem(lp, lp, [], [], Dict(), Dict(), [], [], false)
+        preprocessed_problem = PreprocessedLPProblem(
+            lp, lp, [], [], Dict(), Dict(), [], [], false
+        )
     else
         println("Running presolve...")
-        preprocessed_problem = presolve_lp(lp, verbose=parsed_args["verbose"])
+        preprocessed_problem = presolve_lp(lp; verbose=parsed_args["verbose"])
     end
 
     if parsed_args["interior"]
@@ -122,12 +122,16 @@ function handle_lp_operations(parsed_args)
         # Call interior point method logic here
     elseif parsed_args["simplex"]
         println("Using simplex method")
-        solution, objective_value = revised_simplex(preprocessed_problem, verbose=parsed_args["verbose"])
+        solution, objective_value = revised_simplex(
+            preprocessed_problem; verbose=parsed_args["verbose"]
+        )
         println("Solution: ", solution)
         println("Objective value: ", objective_value)
     else
         println("Defaulting to simplex method")
-        solution, objective_value = revised_simplex(preprocessed_problem, verbose=parsed_args["verbose"])
+        solution, objective_value = revised_simplex(
+            preprocessed_problem; verbose=parsed_args["verbose"]
+        )
         println("Solution: ", solution)
         println("Objective value: ", objective_value)
     end
@@ -147,7 +151,7 @@ function main()
     parsed_args = parse_commandline()
 
     # Handle LP operations
-    handle_lp_operations(parsed_args)
+    return handle_lp_operations(parsed_args)
 end
 
 # Run the main function

@@ -6,23 +6,23 @@ using Test
 # push!(LOAD_PATH, realpath("src/code"))
 push!(LOAD_PATH, realpath(joinpath(@__DIR__, "../../src/code")))
 
-
 #using lp_read_mps
 using lp_read_mps: read_file_to_string, read_mps_from_string_mip, read_mps_with_JuMP_MIP
 
 export test_mps_parsing_consistency
 
-
-function test_mps_parsing_consistency(mps_file::String; 
-    check_is_minimize::Bool=true, 
-    check_objective_coeffs::Bool=true, 
-    check_constraint_matrix::Bool=true, 
-    check_rhs_values::Bool=true, 
-    check_lower_bounds::Bool=true, 
-    check_upper_bounds::Bool=true, 
-    check_variable_names::Bool=true, 
-    check_constraint_types::Bool=true, 
-    check_variable_types::Bool=true)
+function test_mps_parsing_consistency(
+    mps_file::String;
+    check_is_minimize::Bool=true,
+    check_objective_coeffs::Bool=true,
+    check_constraint_matrix::Bool=true,
+    check_rhs_values::Bool=true,
+    check_lower_bounds::Bool=true,
+    check_upper_bounds::Bool=true,
+    check_variable_names::Bool=true,
+    check_constraint_types::Bool=true,
+    check_variable_types::Bool=true,
+)
     @testset "Test consistency between MPS parsing functions with $mps_file" begin
 
         # Read the MPS file content as a string
@@ -35,7 +35,8 @@ function test_mps_parsing_consistency(mps_file::String;
         # Conditional checks based on the arguments
         if check_is_minimize
             println("Testing is_minimize...")
-            @test lp_mip_1.is_minimize == lp_mip_2.is_minimize || println("is_minimize check failed")
+            @test lp_mip_1.is_minimize == lp_mip_2.is_minimize ||
+                println("is_minimize check failed")
         end
 
         if check_objective_coeffs
@@ -70,7 +71,8 @@ function test_mps_parsing_consistency(mps_file::String;
 
         if check_constraint_types
             println("Testing constraint types...")
-            @test lp_mip_1.constraint_types == lp_mip_2.constraint_types || println("Constraint types check failed")
+            @test lp_mip_1.constraint_types == lp_mip_2.constraint_types ||
+                println("Constraint types check failed")
         end
 
         # if check_variable_types
