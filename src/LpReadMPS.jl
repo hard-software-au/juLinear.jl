@@ -9,8 +9,10 @@ const MOI = MathOptInterface
 push!(LOAD_PATH,".")
 using LpProblem
 
-export read_file_to_string, read_mps_from_file, read_mps_from_string, read_mps_with_JuMP
-export read_mps
+export read_file_to_string
+export read_mps_from_string
+export read_mps_with_JuMP
+export read_mps, read_mps_from_file
 
 ###################################################################################
 ## File methods
@@ -33,8 +35,9 @@ function read_file_to_string(file_path::String)
     end
 end
 
+
 """
-    read_mps_from_file(file_path::String) -> LPProblem
+    read_mps(file_name::read_mps)
 
 Reads an MPS file and converts it into an `LPProblem` struct.
 
@@ -44,11 +47,6 @@ Reads an MPS file and converts it into an `LPProblem` struct.
 # Returns
 - `LPProblem`: A struct containing the LP problem data.
 """
-function read_mps_from_file(file_path::String)
-    mps_string = read_file_to_string(file_path)
-    return read_mps_from_string(mps_string)
-end
-
 function read_mps(file_path::String)
     mps_string = read_file_to_string(file_path)
     return read_mps_from_string(mps_string)
