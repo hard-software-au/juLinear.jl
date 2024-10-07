@@ -1,13 +1,17 @@
-# Unit tests for juLinear
+# Unit Tests for juLinear
 
-This directory contains all the unit tests for the juLinear program, ensuring the reliability and correctness of its components, including the MPS and LP file readers.
+This directory contains all the unit tests for the juLinear program, ensuring the reliability and correctness of its components.
 
 
 ## Table of Contents
 - [Overview](#overview)
 - [Test Files](#test-files)
 - [Running the Unit Tests](#running-the-unit-tests)
-   - [Interpreting the Results](#interpeting-the-results)
+  - [Running All Unit Tests](#running-all-unit-tests)
+  - [Running Individual Unit Tests](#running-individual-unit-tests)
+  - [Interpreting the Results](#interpreting-the-results)
+- [Creating Unit Tests](#creating-unit-tests)
+- [Manually Creating Unit Tests](#)
 
 
 ## Overview
@@ -19,29 +23,58 @@ raising appropriate errors.
 - The internal representation (`LPProblem` structure) matches expected outcomes for given input files.
 
 ## Test Files
-- `test_framework`: Contains the main framework for running the unit tests, including setup and teardown processes.
-- `test_helpers`: Provides utility functions and helpers used across multiple test cases.
-- `test_read_mps.jl`: Contains unit tests specifically for the MPS file reader.
-- `test_read_LP.jl`: Contains unit tests for the LP file reader, including tests for both valid and corrupt LP files.
+- `RunAllTests.jl`: This file runs all the tests.
+- `TestFramework`: Contains the main framework for running the unit tests and creating new test files.
+- `TestHelpers`: Provides utility functions and helpers used across multiple test cases.
+- `TestReadMPS.jl`: Contains unit tests for the MPS file reader.
+- `TestReadLP.jl`: Contains unit tests for the LP file reader.
+- `TestStandardFormConverter.jl" :  Contains unit tests for the standard form converter.
 
 
 ## Running the Unit Tests
 
+First, navigate to the test directory:
+
 ```bash
 cd /path/to/your/project/check/test
+```
+
+### Running All Unit Tests
+
+To run all the unit tests, use the following command:
+
+```bash
+julia /path/to/your/project/check/test
+```
+
+### Running Individual Unit Tests
+
+1. First open the julia REPL inside the test directory:
+```bash
 julia
 ```
 
+2. Next load the path and import the TestFramework module:
 ```julia
 push!(LOAD_PATH, ".")
-using test_framework
+using TestFramework
 ```
+3. Now the tests can be run using the run_tests function:
 ```julia
-run_tests(["ReadMPS","ReadLp"])
+run_tests(["ReadMPS", "ReadLp"])
 ```
-Additonally, there is a option for the verbose of test:
+- Additonally, there is a option for the verbose of test:
 ```julia
 run_tests([test_modules],verbose=true)
+```
+### Example Unit Test Output
+
+For demostrative purposes the test logs of a passed and failed test can be seen below.
+
+#### Example of Passed test
+```julia
+Test Summary: | Pass  Total  Time
+All Tests     |   88     88  0.5s
 ```
 
 #### Example of Failed Test
@@ -60,11 +93,6 @@ All Tests                               |  151     1    152  6.6s
         LPProblem Specific Values Tests |    8     1      9  0.3s
 ERROR: Some tests did not pass: 151 passed, 1 failed, 0 errored, 0 broken.
 ```
-#### Example of Passed test
-```julia
-Test Summary: | Pass  Total  Time
-All Tests     |   88     88  0.5s
-```
 
 ### Interpeting the Results
 - Pass: Number of tests that succeeded.
@@ -72,3 +100,23 @@ All Tests     |   88     88  0.5s
 - Error: Number of tests that encountered unexpected errors.
 - Total: Total number of tests executed.
 - Time: Duration taken to run the tests.
+
+## Creating Unit Tests
+
+New unit tests can be created either manually or using a function from the `TestFrameworks module`.
+
+### Using TestFrameworks Module to Create Unit Tests
+
+First navigate to the test directory in your julia REPL.
+
+Then Run the following Command:
+```julia
+using TestFrameworks
+create_module_tests(module_name)
+```
+
+This will create a template for the unit test. Which can be expanded with module specific tests occording to the functionality of the module it is testing.
+
+###  Manually
+
+Copy the formatting of the other unit tests.
