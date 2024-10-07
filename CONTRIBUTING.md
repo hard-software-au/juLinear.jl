@@ -20,14 +20,72 @@ You can raise issues in the normal way via [GitHub Issues](https://github.com/ju
 
 ## Contributing Code to juLinear.jl
 
-juLinear.jl is open to contributions from the community. To contribute:
+**juLinear.jl** is an open-source project, and contributions from the community are encouraged! Whether you're fixing a bug, adding a feature, or improving documentation, we welcome your involvement.
 
-1. **Fork the repository**: Clone it and create a new branch for your contribution.
-2. **Branching conventions**: Use descriptive branch names following the convention `initials/short-description`, e.g., `ry/fix-typo`.
-3. **Submit a pull request**: When you're ready, submit a pull request (PR) to the `main` branch. Include details about your changes in the PR description. Ensure your code follows the coding guidelines.
+### How to Contribute
 
-Before submitting, ensure your code passes all tests and follows the project's coding style. If you're unsure about certain changes, feel free to start a discussion by opening an issue before working on it.
+#### 1. Fork the Repository
+- Navigate to the [juLinear.jl repository](https://github.com/YOUR-REPO-LINK) and click the "Fork" button in the top-right corner.
+- Clone your fork locally:
 
-## License Agreement
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/juLinear.jl.git
+   cd juLinear.jl
+#### 2. Create a New Branch
+- Use a descriptive branch name following the format `initials/short-description`, for example:
+
+   ```bash
+   git checkout -b ry/fix-typo
+#### 3. Make Your Changes
+- Ensure your changes align with the project's coding standards. See Coding Guidelines below for details.
+- Keep commits focused: Make sure each commit represents a single change or improvement. If you're working on multiple changes, split them into separate commits.
+- Run all relevant tests to ensure your changes don't introduce new bugs.
+
+#### 4. Testing Your Changes
+- Ensure all tests pass before submitting. We rely on tests to verify the stability of the project. You can run the test suite using:
+
+   ```bash
+   julia --project test/runtests.jl
+- If you're adding new functionality, please include corresponding tests to validate your contributions.
+
+#### 5. Submit a Pull Request (PR)
+- Once you're ready, push your changes to your fork and open a PR to the main branch of the original repository.
+
+
+   ```bash
+   git push origin YOUR-BRANCH-NAME
+- In your PR description, provide:
+
+  - A summary of what your changes address (linking any related issues if applicable).
+  - Any additional context or details that may be helpful for reviewers.
+  - Steps to reproduce the issue (if it's a bug fix).
+  - Details on any new tests or validation done for the changes.
+
+#### 6. Review Process
+- After opening a pull request, one of the project maintainers will review it. You may receive feedback or requests for changes, so be prepared for a collaborative process.
+- Once approved, your changes will be merged into the main branch.
+
+#### 7. Updating Your PR
+- If changes are requested in your PR, make the necessary updates and push the revised code to your branch.
+
+   ```bash
+   git push origin YOUR-BRANCH-NAME
+- GitHub will automatically update your pull request with the new changes.
+
+### Branching Conventions
+Please follow these branch-naming conventions:
+
+- **Bugfixes**: `initials/fix-description`, e.g., `ab/fix-boundary-condition`
+- **Features**: `initials/feature-description`, e.g., `xy/feature-dual-simplex`
+- **Documentation**: `initials/docs-description`, e.g., `mn/docs-api-updates`
+
+### Coding Guidelines
+
+- **Code Style**: Follow [BlueStyle](https://github.com/invenia/BlueStyle), the Julia code style guide, to ensure consistent and readable code. Use the project JuliaFormatter configuration file `.JuliaFormatter.toml` and apply the formatting to your code prior to creating any Pull Requests.
+- **Comments**: Use comments to explain non-obvious code, especially complex logic. Keep comments clear and concise.
+- **Function Names**: Follow Julia naming conventions, i.e., use lowercase function names with words separated by underscores (`_`).
+- **Documentation**: If your contribution includes new functionality, ensure the relevant parts of the code are documented with clear usage examples.
+
+### License Agreement
 
 By contributing to juLinear.jl, you agree to assign the rights of your contributions under the terms of the MIT License.
