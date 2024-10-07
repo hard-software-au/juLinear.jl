@@ -46,26 +46,26 @@ Whether you're a beginner learning linear programming or an advanced user explor
   - `mps_files`: MPS problem files like `blend.mps`, `small_mip.mps`, etc.
 - **test**: Test scripts for validating functionality.
   - `README.md`: Documentation for the test suite.
-  - `test_framework.jl`: Main test framework.
-  - `test_helpers.jl`: Helper functions for tests.
-  - `test_mps.jl`: Tests for MPS file reading.
-  - `test_read_LP.jl`: Tests for LP file reading.
-  - `test_read_mps.jl`: Additional tests for MPS file reading.
+  - `TestFramework.jl`: Main test framework.
+  - `TestHelpers.jl`: Helper functions for tests.
+  - `TestMPS.jl`: Tests for MPS file reading.
+  - `TestReadLP.jl`: Tests for LP file reading.
+  - `TestReadMPS.jl`: Additional tests for MPS file reading.
 
 ### docs
 - **LaTeX**: LaTeX documentation and reports.
   - `LP_Formulation.tex`, `sources.bib`: LaTeX files for reports.
 - **build**: Compiled documentation generated using `Documenter.jl`.
 - **src**: Markdown files used for documentation.
-  - `lp_presolve.md`, `lp_problem.md`, etc.
+  - `LpPresolve.md`, `lp_problem.md`, etc.
 - `make.jl`: Script to generate the documentation.
 
 ### nb
 - **Jupyter Notebooks**: Interactive notebooks exploring LP concepts.
-  - `lp_MIP_notebook.ipynb`: Mixed Integer Programming notebook.
-  - `lp_revised_simplex_notebook.ipynb`: Revised Simplex method notebook.
-  - `lp_interior_point_notebook.ipynb`: Interior point method exploration.
-  - `test_o1_revised_simplex.ipynb`: Revised simplex method using OpenAI model.
+  - `LpMIPNotebook.ipynb`: Mixed Integer Programming notebook.
+  - `LpRevisedSimplexNotebook.ipynb`: Revised Simplex method notebook.
+  - `LpInteriorPointNotebook.ipynb`: Interior point method exploration.
+  - `TestO1RevisedSimplex.ipynb`: Revised simplex method using OpenAI model.
 
 ### res
 - **diagrams**: Diagrams used in the project documentation.
@@ -119,8 +119,9 @@ To add a new Julia module, place your `.jl` file in the `src` directory and upda
 
 Make sure to add test cases in the `check/test` directory for any new functionality you introduce. You can run the tests using:
 ```bash
-    julia test_framework.jl
+    julia check/test/RunAllTests.jl
 ```
+For more information see this [README](check/test/README.md).
 
 ## Contribution Guidelines
 
