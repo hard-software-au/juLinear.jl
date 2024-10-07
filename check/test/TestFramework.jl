@@ -9,6 +9,11 @@ using TestHelpers  # Access exported functions from test_helpers
 # Export functions and constants so they can be used outside the module
 export run_tests, create_module_tests
 
+
+#####################################################################################
+## Running Unit Tests
+#####################################################################################
+
 """
     run_tests(test_modules::Vector{String}; verbose::Bool=false)
 
@@ -40,6 +45,11 @@ function run_tests(test_modules::Vector{String}; verbose::Bool=false)
     end
 end
 
+
+#####################################################################################
+## Creating Unit Tests
+#####################################################################################
+
 """
     create_module_tests(module_name::String)
 
@@ -66,20 +76,20 @@ using Test
 using LinearAlgebra
 using SparseArrays
 
-# Include test_helpers module
+# Include TestHelpers module for test utilies 
 push!(LOAD_PATH, abspath(@__DIR__))
-using TestTelpers  # Access exported functions from test_helpers
+using TestHelpers  # Access exported functions from TestHelpers
 
-# Include lp_problem and lp_read_LP modules
+# Include local modules
 push_directory_to_load_path(:src)
 using LpProblem
+
 using Lp$module_name
 
 
 
 
 @testset "$module_name Tests" begin
-    # for test in Tests
     # put your test logic here
 end
         """,
