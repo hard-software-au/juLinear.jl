@@ -1,4 +1,4 @@
-module lp_read_mps
+module LpReadMPS
 
 using SparseArrays
 using DataStructures
@@ -6,7 +6,8 @@ using JuMP
 using MathOptInterface
 const MOI = MathOptInterface
 
-using lp_problem
+push!(LOAD_PATH,".")
+using LpProblem
 
 export read_file_to_string, read_mps_from_file, read_mps_from_string, read_mps_with_JuMP
 export read_mps

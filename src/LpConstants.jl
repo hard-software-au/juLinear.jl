@@ -1,4 +1,4 @@
-module lp_constants
+module LpConstants
 
 export COMMAND_LINE_OPTION_FILENAME,
     COMMAND_LINE_OPTION_USE_NO_PRESOLVE,

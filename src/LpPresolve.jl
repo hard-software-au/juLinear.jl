@@ -1,9 +1,9 @@
-module lp_presolve
+module LpPresolve
 
 using LinearAlgebra
 using SparseArrays
 using DataStructures
-using lp_problem
+using LpProblem
 
 export lp_detect_and_remove_fixed_variables
 export presolve_lp

@@ -1,10 +1,10 @@
-module lp_read_LP
+module LpReadLP
 
 using SparseArrays
 using LinearAlgebra
 using DataStructures  # For OrderedDict if needed
 
-using lp_problem
+using LpProblem
 
 export read_lp, write_lp
 

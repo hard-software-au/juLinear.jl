@@ -1,4 +1,4 @@
-module lp_utils
+module LpUtils
 
 export is_running_in_notebook
 

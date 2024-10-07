@@ -1,9 +1,9 @@
-module lp_simplex
+module LpSimplex
 
 using SparseArrays
 using LinearAlgebra
-using lp_problem
-using lp_standard_form_converter
+using LpProblem
+using LpStandardFormConverter
 
 export revised_simplex_method
 

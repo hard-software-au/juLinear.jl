@@ -1,11 +1,11 @@
-module lp_hsd_ipm
+module LPHsdIpm
 
 using SparseArrays
 using LinearAlgebra
 # Local modules
 push!(LOAD_PATH, ".")
-using lp_problem
-using lp_standard_form_converter
+using LpProblem
+using Lp_StandardFormConverter
 
 # Export the solver function
 export hsdLPsolver

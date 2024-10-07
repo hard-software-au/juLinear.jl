@@ -1,7 +1,7 @@
-module lp_standard_form_converter
+module LpStandardFormConverter
 
 using SparseArrays
-using lp_problem
+using LpProblem
 
 # Export the functions
 export convert_to_standard_form

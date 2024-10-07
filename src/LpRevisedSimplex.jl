@@ -1,10 +1,10 @@
-module lp_revised_simplex
+module LpRevisedSimplex
 
 using SparseArrays
 using LinearAlgebra
 # Local modules
-using lp_problem
-using lp_standard_form_converter
+using LpProblem
+using LpStandardFormConverter
 
 # Export the revised_simplex function
 export revised_simplex

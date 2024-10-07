@@ -1,4 +1,4 @@
-module juLinear
+module JuLinear
 
 using LinearAlgebra
 using SparseArrays
@@ -7,14 +7,14 @@ using ArgParse
 
 # Local modules
 push!(LOAD_PATH, ".")
-using lp_constants
-using lp_utils
-using lp_presolve
-using lp_problem
-using lp_read_LP  # Updated to use read_lp from this module
-using lp_read_mps
-using lp_revised_simplex
-using lp_standard_form_converter
+using LpConstants
+using LpUtils
+using LpPresolve
+using LpProblem
+using LPReadLP  # Updated to use read_lp from this module
+using LpReadMPS
+using LPRevisedSimplex
+using LpStandardFormConverter
 
 """
     parse_commandline() -> Dict

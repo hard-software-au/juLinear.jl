@@ -1,4 +1,4 @@
-module lp_problem
+module LpProblem
 
 using SparseArrays
 
