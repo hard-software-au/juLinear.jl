@@ -3,32 +3,35 @@ using Documenter
 
 # Include your modules
 push!(LOAD_PATH, joinpath(@__DIR__, "../src"))
-include("../src/lp_presolve.jl")                # Include the lp_presolve module
-include("../src/lp_problem.jl")                 # Include the lp_problem module
-include("../src/lp_read_mps.jl")                # Include the lp_read_mps module
-include("../src/lp_revised_simplex.jl")         # Include the lp_revised_simplex module
-include("../src/lp_standard_form_converter.jl") # Include the lp_standard_form_converter module
-include("../src/we_need_a_name.jl")                  # Include the lp_solver module
+include("../src/LpPresolve.jl")              # Include the LpPresolve module
+include("../src/LpProblem.jl")               # Include the LpProblem module
+include("../src/LpReadMPS.jl")               # Include the LpReadMPS module
+include("../src/LpReadLP.jl")                # Include the LpReadLP module
+include("../src/LpRevisedSimplex.jl")        # Include the lpRevisedSimplex module
+include("../src/LpStandardFormConverter.jl") # Include the LpStandardFormConverter module
+include("../src/juLinear.jl")                # Include the juLinear module
 
 # Build the documentation
 makedocs(;
     modules=[
-        lp_presolve,
-        lp_problem,
-        lp_read_mps,
-        lp_revised_simplex,
-        lp_standard_form_converter,
-        lp_solver,
+        LpPresolve,
+        LpProblem,
+        LpReadMPS,
+        LpReadLP,
+        LpRevisedSimplex,
+        LpStandardFormConverter,
+        juLinear,
     ],
-    sitename="Julia lp_code documentation",
+    sitename="juLinear.jl documentation",
     pages=[
         "Home" => "index.md",
-        "`lp_presolve`" => "lp_presolve.md",
-        "`lp_problem`" => "lp_problem.md",
-        "`lp_read_mps`" => "lp_read_mps.md",
-        "`lp_revised_simplex`" => "lp_revised_simplex.md",
-        "`lp_standard_form_converter`" => "lp_standard_form_converter.md",
-        "`lp_solver`" => "lp_solver.md",
+        "`LpPresolve`" => "LpPresolve.md",
+        "`LpProblem`" => "LpProblem.md",
+        "`LpReadMPS`" => "LpReadMPS.md",
+        "`LpReadLP`" => "LpReadLP.md",
+        "`LpRevisedSimplex`" => "LpRevisedSimplex.md",
+        "`LpStandardFormConverter`" => "LpStandardFormConverter.md",
+        "`juLinear`" => "juLinear.md",
     ],
     format=Documenter.HTML(),
     clean=true,
