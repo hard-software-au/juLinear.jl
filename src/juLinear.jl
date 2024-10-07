@@ -1,4 +1,4 @@
-module JuLinear
+module juLinear
 
 using LinearAlgebra
 using SparseArrays
@@ -11,23 +11,27 @@ using LpConstants
 using LpUtils
 using LpPresolve
 using LpProblem
-using LPReadLP  # Updated to use read_lp from this module
+using LpReadLP 
 using LpReadMPS
-using LPRevisedSimplex
+using LpRevisedSimplex
 using LpStandardFormConverter
+
+###############################################################################
+## Parse Commandline
+###############################################################################
 
 """
     parse_commandline() -> Dict
 
-Parses command-line arguments using the ArgParse package. It defines options such as the problem file path, method type (simplex or interior point), and verbosity.
+Parses command-line arguments using the `ArgParse` package. It defines options such as the problem file path, method type (simplex or interior point), and verbosity.
 
 # Returns
-- `Dict`: A dictionary of parsed arguments.
+- `Dict`: A dictionary containing the parsed arguments.
 
 # Command-Line Arguments
-- `--filename, -f`: Path to the problem file in LP format (required).
-- `--interior, -i`: Use the interior point method (LP only).
-- `--no_presolve`: Skip the presolve step (default is false).
+- `--filename, -f`: Path to the problem file (LP or MPS format). If not provided, a default file path is used.
+- `--interior, -i`: Use the interior point method (currently not implemented).
+- `--no_presolve`: Skip the presolve step (default is `false`).
 - `--simplex, -s`: Use the simplex method (default).
 - `--verbose, -v`: Enable verbose output.
 """
@@ -64,19 +68,24 @@ function parse_commandline()
     return parse_args(s)
 end
 
-"""
-    load_lp_problem_from_lp(filename::String) -> LPProblem
 
-Loads a linear programming (LP) problem from an LP file using the `read_lp` function.
+###############################################################################
+## Load Lp problem
+###############################################################################
+
+"""
+    load_lp_problem(filename::String) -> LPProblem
+
+Loads a linear programming (LP) problem from an LP or MPS file.
 
 # Arguments
-- `filename::String`: The path to the LP file containing the problem.
+- `filename::String`: The path to the LP/MPS file containing the problem.
 
 # Returns
-- `LPProblem`: The parsed LP problem struct.
+- `LPProblem`: The parsed LPProblem struct.
 
 # Example
-lp = load_lp_problem_from_lp("problem.lp")
+lp = load_lp_problem("problem.lp")
 """
 function load_lp_problem(filename::String)
     println("Loading LP problem from file: $filename")
@@ -93,10 +102,15 @@ function load_lp_problem(filename::String)
     return lp
 end
 
+
+###############################################################################
+## handle_lp_operations
+###############################################################################
+
 """
     handle_lp_operations(parsed_args::Dict)
 
-Handles the operations required to solve the LP problem based on the parsed command-line arguments. It decides which method (simplex or interior point) to use, and whether to presolve.
+Handles the operations required to solve the LP problem based on the parsed command-line arguments. 
 
 # Arguments
 - `parsed_args::Dict`: The parsed command-line arguments, including options such as the file path, optimization method, and presolve option.
@@ -136,6 +150,11 @@ function handle_lp_operations(parsed_args)
         println("Objective value: ", objective_value)
     end
 end
+
+
+###############################################################################
+## Main
+###############################################################################
 
 """
     main()
