@@ -1,25 +1,33 @@
+<a id="readme-top"></a>
 # juLinear.jl Code Repository
 
 This repository contains a collection of linear programming (LP) prototypes aimed at exploring and understanding various procedures used to solve LP problems. It includes implementations of multiple algorithms, utilities for reading and processing LP data, and interactive Jupyter notebooks for guided learning. The focus is on creating a hands-on, educational resource for anyone interested in linear programming mechanics.
 
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Table of Contents
 1. [Introduction](#introduction)
-  - [Key Objectives of This Project](#key-objectives-of-this-project)
+    - [Key Objectives of This Project](#key-objectives-of-this-project)
 2. [Directory Structure](#directory-structure)
-  - [Root Directory](#root-directory)
-  - [check](#check)
-  - [docs](#docs)
-  - [nb](#nb)
-  - [res](#res)
-  - [src](#src)
-  - [tools](#tools)
+    - [Root Directory](#root-directory)
+    - [check](#check)
+    - [docs](#docs)
+    - [nb](#nb)
+    - [res](#res)
+    - [src](#src)
+    - [tools](#tools)
 3. [Usage](#usage)
-  - [Command Line Options](#command-line-options)
+    - [Command Line Options](#command-line-options)
 4. [Adding to the Repository](#adding-to-the-repository)
-  - [Adding New Modules](#adding-new-modules)
-  - [Running Tests](#running-tests)
-4. [Contribution Guidelines](#contribution-guidelines)
-5. [License](#license)
+    - [Adding New Modules](#adding-new-modules)
+    - [Running Tests](#running-tests)
+5. [Contribution Guidelines](#contribution-guidelines)
+6. [Documentation](#documentation)
+7. [License](#license)
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Introduction
 
@@ -31,6 +39,9 @@ Linear programming is a powerful mathematical optimization technique used to sol
 - **Algorithm Exploration**: Enable users to explore different LP techniques, including presolve routines, revised simplex methods, and MPS file parsing.
 
 Whether you're a beginner learning linear programming or an advanced user exploring solver nuances, this repository provides a practical, hands-on experience.
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Directory Structure
 
@@ -77,18 +88,21 @@ Whether you're a beginner learning linear programming or an advanced user explor
 ### src
 - **Julia Source Code**: Core modules for LP problem solving.
   - `juLinear.jl`: Main LP solver script with command-line support.
-  - `lp_constants.jl`: Constants used across modules.
-  - `lp_presolve.jl`: Presolve routines for preprocessing LP problems.
-  - `lp_problem.jl`: Defines the LP problem data structure.
-  - `lp_read_mps.jl`, `lp_read_LP.jl`: MPS and LP file parsers.
-  - `lp_revised_simplex.jl`: Revised simplex solver.
+  - `LpConstants.jl`: Constants used across modules.
+  - `LpPresolve.jl`: Presolve routines for preprocessing LP problems.
+  - `LpProblem.jl`: Defines the LP problem data structure.
+  - `LpReadMPS.jl`, `LpReadLP.jl`: MPS and LP file parsers.
+  - `LpRevisedSimplex.jl`: Revised simplex solver.
   - `lp_standard_form_converter.jl`: Converts LP problems to standard form.
   - `lp_utils.jl`: Utility functions for LP operations.
 
 ### tools
 - **Utilities**: Additional scripts supporting the project.
-  - `analyse_git_logs.ipynb`: Analysis of git logs.
-  - `nb_to_jl.py`: Script to convert Jupyter notebooks to `.jl` files.
+  - `AnalyseGitLogs.ipynb`: Analysis of git logs.
+  - `NbToJl.py`: Script to convert Jupyter notebooks to `.jl` files.
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>  
 
 ## Usage
 
@@ -108,6 +122,9 @@ First, navigate to the `src` folder in the terminal and run the following comman
 - `--no_presolve`: Skip the presolve step.
 - `--verbose`: Enable verbose output.
 
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Adding to the Repository
 
 ### Adding New Modules
@@ -126,9 +143,20 @@ Make sure to add test cases in the `check/test` directory for any new functional
 ```
 For more information see this [README](check/test/README.md).
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Documentation
+
+The documentation for this Repository can be found in the [GitHub Pages](https://hard-software-au.github.io/juLinear.jl/docs/build/).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Contribution Guidelines
 
 If you'd like to contribute, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for instructions. Additionally, please review the Code of Conduct to ensure you adhere to our community standards.
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## License
 
