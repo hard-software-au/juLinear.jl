@@ -4,11 +4,11 @@ Welcome! This document outlines how you can contribute to juLinear.jl. We apprec
 
 ## Code of Conduct
 
-All contributors are expected to adhere to the [Code of Conduct](https://github.com/juLinear/juLinear.jl/blob/master/CODE_OF_CONDUCT.md). Please take a moment to review it before contributing.
+All contributors are expected to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md). Please take a moment to review it before contributing.
 
 ## Communication
 
-For general inquiries, bug reports, and discussion about the project, feel free to reach out via [GitHub Issues](https://github.com/juLinear/juLinear.jl/issues) or contact the maintainers directly.
+For general inquiries, bug reports, and discussion about the project, feel free to reach out via [GitHub Issues](https://github.com/hard-software-au/juLinear.jl/issues/) or contact the maintainers directly.
 
 ## Improving Documentation
 
@@ -16,7 +16,7 @@ If you find any issues with the documentation or have ideas to improve it, contr
 
 ## Raising Issues
 
-You can raise issues in the normal way via [GitHub Issues](https://github.com/juLinear/juLinear.jl/issues). If you're reporting a bug, providing detailed steps to reproduce the issue will help us resolve it faster.
+You can raise issues in the normal way via [GitHub Issues](hhttps://github.com/hard-software-au/juLinear.jl/issues/). If you're reporting a bug, providing detailed steps to reproduce the issue will help us resolve it faster.
 
 ## Contributing Code to juLinear.jl
 
@@ -25,11 +25,11 @@ You can raise issues in the normal way via [GitHub Issues](https://github.com/ju
 ### How to Contribute
 
 #### 1. Fork the Repository
-- Navigate to the [juLinear.jl repository](https://github.com/YOUR-REPO-LINK) and click the "Fork" button in the top-right corner.
+- Navigate to the [juLinear.jl repository](https://github.com/hard-software-au/juLinear.jl) and click the "Fork" button in the top-right corner.
 - Clone your fork locally:
 
    ```bash
-   git clone https://github.com/YOUR-USERNAME/juLinear.jl.git
+   git clone https://github.com/hard-software-au/juLinear.jl.git
    cd juLinear.jl
 #### 2. Create a New Branch
 - Use a descriptive branch name following the format `initials/short-description`, for example:
