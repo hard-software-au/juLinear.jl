@@ -1,0 +1,23 @@
+graph TD
+    A[Start] --> B[Remove all fixed variables]
+    B --> C{No reductions in last pass?}
+    C --> |No| D[Check Rows]
+    D --> E[Remove all empty rows]
+    E --> F[Remove redundant rows]
+    F --> G[Process singleton rows]
+    G --> H[Check Columns]
+    H --> I[Remove all empty columns]
+    I --> J[Remove fixed columns]
+    J --> K[Process singleton columns]
+    K --> L[Simplify doubleton equations]
+    L --> M[Bound Tightening]
+    M --> N[Remove Dominated Constraints]
+    N --> O[Check for Duplicates]
+    O --> P[Remove duplicate rows]
+    P --> Q[Remove duplicate columns]
+    Q --> R[Handle Implied Free and Forcing Variables]
+    R --> S{Infeasibility Detected?}
+    S --> |Yes| T[End]
+    S --> |No| C
+    C --> |Yes| U[Remove all empty rows and columns]
+    U --> V[End]
