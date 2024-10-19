@@ -477,74 +477,84 @@ write_lp("output.lp", lp)
 - Bounds are written based on the contraint matrix and right-hand side vector.
 - If the problem contains binary of integer varibles, they are listed under the apporapiate sections.
 """
-function write_lp(filename::String, problem::LPProblem)
+function write_lp(filename::String, problem::LPProblem; tolerance::Float64=1e-10)
+    # Validate input dimensions
+    n_vars = length(problem.vars)
+    n_constraints = size(problem.A, 1)
+    
+    @assert length(problem.c) == n_vars "Objective coefficient vector length mismatch"
+    @assert size(problem.A, 2) == n_vars "Constraint matrix column count mismatch"
+    @assert length(problem.b) == n_constraints "RHS vector length mismatch"
+    @assert length(problem.constraint_types) == n_constraints "Constraint types length mismatch"
+    @assert length(problem.l) == n_vars "Lower bounds vector length mismatch"
+    @assert length(problem.u) == n_vars "Upper bounds vector length mismatch"
+    @assert length(problem.variable_types) == n_vars "Variable types length mismatch"
+    
+    # Validate constraint types
+    valid_types = ['L', 'G', 'E']
+    @assert all(t ∈ valid_types for t in problem.constraint_types) "Invalid constraint type found"
+    
+    function format_term(coeff::Float64, var::String, is_first::Bool)
+        abs_coeff = abs(coeff)
+        if abs_coeff < tolerance
+            return ""
+        elseif abs(abs_coeff - 1.0) < tolerance
+            prefix = coeff < 0 ? "- " : (is_first ? "" : "+ ")
+            return "$(prefix)$var"
+        else
+            prefix = coeff < 0 ? "-" : (is_first ? "" : "+")
+            return "$(prefix) $abs_coeff $var"
+        end
+    end
+
     open(filename, "w") do io
         # Write Objective
-        if problem.is_minimize
-            println(io, "Minimize")
-        else
-            println(io, "Maximize")
-        end
-
-        # Write the objective function
+        println(io, problem.is_minimize ? "Minimize" : "Maximize")
         print(io, " obj: ")
-        terms = []
+        
+        # Write objective function
+        terms = String[]
+        first_term = true
         for (i, coeff) in enumerate(problem.c)
-            var = problem.vars[i]
-            if coeff != 0.0
-                if coeff == 1.0
-                    push!(terms, "$var")
-                elseif coeff == -1.0
-                    push!(terms, "- $var")
-                else
-                    sign = coeff > 0 ? "+" : "-"
-                    push!(terms, "$sign $(abs(coeff)) $var")
-                end
+            term = format_term(coeff, problem.vars[i], first_term)
+            if !isempty(term)
+                push!(terms, term)
+                first_term = false
             end
         end
-        println(io, join(terms, " + "))
+        println(io, isempty(terms) ? "0" : join(terms, " "))
 
         # Write Constraints
         println(io, "Subject To")
-        for i in 1:length(problem.b)
-            terms = []
-            for (j, coeff) in zip(findnz(problem.A)[2], findnz(problem.A)[3])
-                if coeff != 0.0 && findnz(problem.A)[1][j] == i
-                    var = problem.vars[j]
-                    if coeff == 1.0
-                        push!(terms, "$var")
-                    elseif coeff == -1.0
-                        push!(terms, "- $var")
-                    else
-                        sign = coeff > 0 ? "+" : "-"
-                        push!(terms, "$sign $(abs(coeff)) $var")
-                    end
+        for i in 1:n_constraints
+            terms = String[]
+            first_term = true
+            for (j, coeff) in zip(findnz(problem.A[i, :])...)
+                term = format_term(coeff, problem.vars[j], first_term)
+                if !isempty(term)
+                    push!(terms, term)
+                    first_term = false
                 end
             end
-
-            # Write the constraint type
-            relation = if problem.constraint_types[i] == 'L'
-                "<="
-            else
-                (problem.constraint_types[i] == 'G' ? ">=" : "=")
-            end
-            println(io, " c$i: ", join(terms, " "), " $relation $(problem.b[i])")
+            
+            relation = Dict('L' => "<=", 'G' => ">=", 'E' => "=")[problem.constraint_types[i]]
+            println(io, " c$i: ", isempty(terms) ? "0" : join(terms, " "), " $relation $(problem.b[i])")
         end
 
         # Write Bounds
         println(io, "Bounds")
-        for i in 1:length(problem.vars)
+        for i in 1:n_vars
             var = problem.vars[i]
             lower = problem.l[i]
             upper = problem.u[i]
-
-            if lower == upper
+            
+            if abs(lower - upper) < tolerance
+                println(io, " $var = $lower")
+            elseif lower > -Inf && upper < Inf
                 println(io, " $lower <= $var <= $upper")
-            elseif lower != -Inf && upper != Inf
-                println(io, " $lower <= $var <= $upper")
-            elseif lower != -Inf
+            elseif lower > -Inf
                 println(io, " $var >= $lower")
-            elseif upper != Inf
+            elseif upper < Inf
                 println(io, " $var <= $upper")
             else
                 println(io, " $var free")
@@ -552,25 +562,16 @@ function write_lp(filename::String, problem::LPProblem)
         end
 
         # Write Binary and Integer variables
-        if any(problem.variable_types .== :Binary)
-            println(io, "Binary")
-            for (i, var_type) in enumerate(problem.variable_types)
-                if var_type == :Binary
-                    println(io, " $(problem.vars[i])")
+        for var_type in [:Binary, :Integer]
+            vars_of_type = [problem.vars[i] for i in 1:n_vars if problem.variable_types[i] == var_type]
+            if !isempty(vars_of_type)
+                println(io, var_type == :Binary ? "Binary" : "General")
+                for var in vars_of_type
+                    println(io, " $var")
                 end
             end
         end
 
-        if any(problem.variable_types .== :Integer)
-            println(io, "General")
-            for (i, var_type) in enumerate(problem.variable_types)
-                if var_type == :Integer
-                    println(io, " $(problem.vars[i])")
-                end
-            end
-        end
-
-        # End the LP file
         println(io, "End")
     end
 end
