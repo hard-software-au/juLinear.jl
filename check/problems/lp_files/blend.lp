@@ -1,0 +1,16 @@
+Maximize
+ obj: - 110.0 VEG01 - 120.0 VEG02 - 130.0 OIL01 - 110.0 OIL02 - 115.0 OIL03 + 150.0 PROD
+Subject To
+ c1: VEG01 + VEG02 <= 200.0
+ c2: OIL01 + OIL02 + OIL03 <= 250.0
+ c3:  8.8 VEG01 + 6.1 VEG02 + 2.0 OIL01 + 4.2 OIL02 + 5.0 OIL03 - 6.0 PROD <= 0.0
+ c4: - 8.8 VEG01 - 6.1 VEG02 - 2.0 OIL01 - 4.2 OIL02 - 5.0 OIL03 + 3.0 PROD <= -0.0
+ c5: VEG01 + VEG02 + OIL01 + OIL02 + OIL03 - PROD = 0.0
+Bounds
+ VEG01 >= 0.0
+ VEG02 >= 0.0
+ OIL01 >= 0.0
+ OIL02 >= 0.0
+ OIL03 >= 0.0
+ PROD >= 0.0
+End
