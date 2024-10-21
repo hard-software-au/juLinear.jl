@@ -59,7 +59,7 @@ Whether you're a beginner learning linear programming or an advanced user explor
   - `lp_files`: LP problem files like `1449a.lp`, `juLinear_ex1.lp`, etc.
   - `mps_files`: MPS problem files like `blend.mps`, `small_mip.mps`, etc.
 - **test**: Test scripts for validating functionality.
-  - `README.md`: Documentation for the test suite.
+  - [`README.md`](check/Test/README.md): Documentation for the test suite.
   - `TestFramework.jl`: Main test framework.
   - `TestHelpers.jl`: Helper functions for tests.
   - `TestMPS.jl`: Tests for MPS file reading.
@@ -69,17 +69,25 @@ Whether you're a beginner learning linear programming or an advanced user explor
 ### docs
 - **LaTeX**: LaTeX documentation and reports.
   - `LP_Formulation.tex`, `sources.bib`: LaTeX files for reports.
+  - [`README`](docs/LaTeX/README.md): Contains documentation for LaTeX reports.
 - **build**: Compiled documentation generated using `Documenter.jl`.
 - **src**: Markdown files used for documentation.
   - `LpPresolve.md`, `lp_problem.md`, etc.
+  - [`README.md`](docs/src/README.md): Contains documentation for julia documentation.
 - `make.jl`: Script to generate the documentation.
 
 ### nb
 - **Jupyter Notebooks**: Interactive notebooks exploring LP concepts.
-  - `LpMIPNotebook.ipynb`: Mixed Integer Programming notebook.
-  - `LpRevisedSimplexNotebook.ipynb`: Revised Simplex method notebook.
-  - `LpInteriorPointNotebook.ipynb`: Interior point method exploration.
-  - `TestO1RevisedSimplex.ipynb`: Revised simplex method using OpenAI model.
+  - [`LpSimplexTableau.ipynb`](nb/LpSimplexTableau.ipynb): First exploration of simplex tableau.
+  - [`LpClaudeRevisedSimplex.ipynb`](nb/LpClaudeRevisedSimplex.ipynb): First exploration of linear programming using Anthropic's Claude AI.
+  - [`LpLlamalpm.ipynb`](nb/LpLlamaIpm.ipynb): Use of Meta's Llama AI for linear programming methods and extends the LPClaudeRevisedSimplex code.
+  - [`TestO1RevisedSimplex.ipynb`](nb/TestO1RevisedSimplex.ipynb): Revised simplex method using OpenAI model.
+  - [`LpPresolveNotebook.ipynb`](nb/LpPresolveNotebook.ipynb): This notebook explores several presolving methods used to reduce the size of a linear programming problem.
+  <!-- `LpMIPNotebook.ipynb`: Mixed Integer Programming notebook. -->
+  - [`LpRevisedSimplexNotebook.ipynb`](nb/LpRevisedSimplexNotebook.ipynb): Revised Simplex method notebook.
+  - [`LpReadLP`](nb/LpReadLPNotebook.ipynb): This notebook explores reading and writing cplex lp files.
+  - [`LpReadMPS`](nb/LpReadMpsNotebook.ipynb): This notebook explores IBMs Mathematical Programming Files(MPS).
+  <!-- `LpInteriorPointNotebook.ipynb`: Interior point method exploration. -->
 
 ### res
 - **diagrams**: Diagrams used in the project documentation.
@@ -91,10 +99,11 @@ Whether you're a beginner learning linear programming or an advanced user explor
   - `LpConstants.jl`: Constants used across modules.
   - `LpPresolve.jl`: Presolve routines for preprocessing LP problems.
   - `LpProblem.jl`: Defines the LP problem data structure.
-  - `LpReadMPS.jl`, `LpReadLP.jl`: MPS and LP file parsers.
+  - `LpReadMPS.jl`, Reads MPS files
+  - `LpReadLP.jl`: Reads and writes LP files.
   - `LpRevisedSimplex.jl`: Revised simplex solver.
-  - `lp_standard_form_converter.jl`: Converts LP problems to standard form.
-  - `lp_utils.jl`: Utility functions for LP operations.
+  - `LpStandardFormConverter.jl`: Converts LP problems to standard form.
+  - `LpUtils.jl`: Utility functions for LP operations.
 
 ### tools
 - **Utilities**: Additional scripts supporting the project.
