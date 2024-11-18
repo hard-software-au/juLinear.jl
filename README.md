@@ -94,16 +94,19 @@ Whether you're a beginner learning linear programming or an advanced user explor
   - `Andersons-routine.svg`, `highs_presolve_routine.mmd`: Diagrams and mermaid files for visualizing LP methods.
 
 ### src
-- **Julia Source Code**: Core modules for LP problem solving.
-  - `juLinear.jl`: Main LP solver script with command-line support.
-  - `LpConstants.jl`: Constants used across modules.
-  - `LpPresolve.jl`: Presolve routines for preprocessing LP problems.
-  - `LpProblem.jl`: Defines the LP problem data structure.
-  - `LpReadMPS.jl`, Reads MPS files
-  - `LpReadLP.jl`: Reads and writes LP files.
-  - `LpRevisedSimplex.jl`: Revised simplex solver.
-  - `LpStandardFormConverter.jl`: Converts LP problems to standard form.
-  - `LpUtils.jl`: Utility functions for LP operations.
+- **file_formats**: Modules for reading and writing LP problem files.
+  - `lp_file_formater.jl`, `lp_read_lp.jl`, `lp_read_mps.jl`: Modules for handling different LP file formats.
+- **preprocess**: Preprocessing routines for LP problems.
+  - `lp_presolve.jl`: Presolve routines for preprocessing LP problems.
+  - `lp_standard_form_converter.jl`: Converts LP problems to standard form.
+- **problems**: Modules defining LP problems.
+  - `lp_problem.jl`, `lp_problem_structs.jl`, `pre_lp_problem.jl`: Structs and data types for representing LP problems.
+- **solvers**: Solvers for LP problems.
+  - `lp_revised_simplex.jl`: Revised simplex solver.
+- **utils**: Utility modules.
+  - `lp_constants.jl`, `lp_utils.jl`: Constants and utility functions used throughout the project.
+- `juLinear.jl`: Main LP solver script with command-line support.
+
 
 ### tools
 - **Utilities**: Additional scripts supporting the project.
