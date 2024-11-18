@@ -1,14 +1,3 @@
-module LpRevisedSimplex
-
-using SparseArrays
-using LinearAlgebra
-# Local modules
-using LpProblem
-using LpStandardFormConverter
-
-# Export the revised_simplex function
-export revised_simplex
-
 """
     revised_simplex(pp::PreprocessedLPProblem; verbose::Bool=false) -> (solution::Dict{String, Float64}, optimal_value::Float64)
 
@@ -216,5 +205,3 @@ function revised_simplex(pp::PreprocessedLPProblem; verbose::Bool=false)
 
     return error("Maximum iterations reached without finding an optimal solution.")
 end
-
-end # module lp_revised_simplex
