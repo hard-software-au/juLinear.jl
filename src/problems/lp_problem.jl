@@ -1,11 +1,3 @@
-module LpProblem
-
-using SparseArrays
-
-# Export the LPProblem struct
-export LPProblem
-export PreprocessedLPProblem
-
 ##############################################################################
 #### LPProblem Struct
 ##############################################################################
@@ -99,5 +91,3 @@ struct PreprocessedLPProblem
     col_scaling::Vector{Float64}  # Scaling factors for columns (optional, if scaling is applied)
     is_infeasible::Bool  # Flag for infeasibility detection
 end
-
-end # module
