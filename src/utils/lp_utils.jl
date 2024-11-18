@@ -1,7 +1,3 @@
-module LpUtils
-
-export is_running_in_notebook
-
 function is_running_in_notebook()
     # Check if running in VS Code's Jupyter notebook environment
     if (haskey(ENV, "VSCODE_PID") || haskey(ENV, "VSCODE_CWD"))
@@ -13,5 +9,3 @@ function is_running_in_notebook()
         return false
     end
 end
-
-end # module
