@@ -5,16 +5,18 @@ using SparseArrays
 using Random
 using ArgParse
 
-# Local modules
+using DataStructures
+using Test
+
+# Local files
 push!(LOAD_PATH, ".")
-using LpConstants
-using LpUtils
-using LpPresolve
-using LpProblem
-using LpReadLP 
-using LpReadMPS
-using LpRevisedSimplex
-using LpStandardFormConverter
+include("problems/lp_problem_structs.jl")
+include("file_formats/lp_file_formater.jl")
+include("preprocess/lp_presolve.jl")
+include("preprocess/lp_standard_form_converter.jl")
+include("solvers/lp_revised_simplex.jl")
+include("utils/lp_constants.jl")
+include("utils/lp_utils.jl")
 
 ###############################################################################
 ## Parse Commandline
