@@ -1,18 +1,3 @@
-module LpReadMPS
-
-using SparseArrays
-using DataStructures
-using JuMP
-using MathOptInterface
-const MOI = MathOptInterface
-
-push!(LOAD_PATH,".")
-using LpProblem
-
-export read_file_to_string
-export read_mps_from_string
-export read_mps_with_JuMP
-export read_mps, read_mps_from_file
 
 ###################################################################################
 ## File methods
@@ -418,4 +403,4 @@ function read_mps_with_JuMP(file_path::String)
     return lp_problem
 end
 
-end # module
+# end # module

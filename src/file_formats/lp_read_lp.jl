@@ -1,12 +1,12 @@
-module LpReadLP
+# module LpReadLP
 
-using SparseArrays
-using LinearAlgebra
-using DataStructures  # For OrderedDict if needed
+# using SparseArrays
+# using LinearAlgebra
+# using DataStructures  # For OrderedDict if needed
 
-using LpProblem
+# using LpProblem
 
-export read_lp, write_lp
+# export read_lp, write_lp
 
 """
     read_lp(filename::String) -> LPProblem
@@ -576,4 +576,4 @@ function write_lp(filename::String, problem::LPProblem; tolerance::Float64=1e-10
     end
 end
 
-end #lp_read_LP
+# end #lp_read_LP
