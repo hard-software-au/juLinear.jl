@@ -1,11 +1,3 @@
-module LpStandardFormConverter
-
-using SparseArrays
-using LpProblem
-
-# Export the functions
-export convert_to_standard_form
-
 """
     convert_to_standard_form(lp::LPProblem; verbose::Bool=false) -> LPProblem
 
@@ -239,5 +231,3 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool=false)::LPProblem
         variable_types,        # Updated variable types
     )
 end
-
-end # module
