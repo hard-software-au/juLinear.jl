@@ -1,17 +1,3 @@
-module LpPresolve
-
-using LinearAlgebra
-using SparseArrays
-using DataStructures
-using LpProblem
-
-export lp_detect_and_remove_fixed_variables
-export presolve_lp
-export lp_remove_zero_rows
-export lp_remove_row_singletons
-export lp_remove_zero_columns
-export lp_remove_linearly_dependent_rows
-
 ##############################################################################
 #### lp_detect_and_remove_fixed_variables
 ##############################################################################
@@ -949,7 +935,7 @@ function lp_remove_linearly_dependent_rows(
     reduced_lp = preprocessed_lp.reduced_problem
 
     # Create the augmented matrix [A b]
-    augmented_matrix = hcat(reduced_lp.A, reduced_lp.b)
+    augmented_matrix = @views hcat(reduced_lp.A, reduced_lp.b)
 
     rows_to_check = collect(1:size(augmented_matrix, 1))  # Start with all rows to check
     removed_rows = Vector{Int}()  # List of removed rows
@@ -1067,5 +1053,3 @@ function presolve_lp(lp_problem::LPProblem; verbose::Bool=false)
 
     return preprocessed_lp
 end
-
-end # module lp_presolve

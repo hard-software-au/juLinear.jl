@@ -152,28 +152,42 @@ function convert_to_standard_form(lp::LPProblem; verbose::Bool=false)::LPProblem
     for i in 1:m
         ct = constraint_types[i]
         if ct == 'L'
+            # Initialize once before the loop (if known or can be estimated)
+            rows, cols, vals = Int[], Int[], Float64[]
+
             # Add slack variable
             slack_var_count += 1
             slack_var_name = "s_$slack_var_count"
-            slack_column = sparsevec([i], [1.0], m)
-            new_A_cols = hcat(new_A_cols, slack_column)
+            append!(rows, i)  # Row index
+            append!(cols, slack_var_count)  # Column index
+            append!(vals, 1.0)  # Value
+
             push!(new_vars, slack_var_name)
             push!(new_variable_types, :Continuous)
             push!(new_l, 0.0)
             push!(new_u, Inf)
+
             if verbose
                 println("Added slack variable '$slack_var_name' to constraint $i (<=).")
             end
+
+            # After all slack variables are added
+            new_A_cols = sparse(rows, cols, vals, m, slack_var_count)  # Final sparse matrix
+
         elseif ct == 'G'
             # Add surplus variable
             surplus_var_count += 1
             surplus_var_name = "r_$surplus_var_count"
-            surplus_column = sparsevec([i], [-1.0], m)
-            new_A_cols = hcat(new_A_cols, surplus_column)
+            append!(rows, i)  # Row index
+            append!(cols, slack_var_count + surplus_var_count)  # Column index (increment appropriately)
+            append!(vals, -1.0)  # Value for surplus variable
+
+            # Update metadata for the surplus variable
             push!(new_vars, surplus_var_name)
             push!(new_variable_types, :Continuous)
             push!(new_l, 0.0)
             push!(new_u, Inf)
+
             if verbose
                 println("Added surplus variable '$surplus_var_name' to constraint $i (>=).")
             end
