@@ -157,11 +157,11 @@ For more information see this [README](check/test/README.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Documentation
+<!-- ## Documentation
 
 The documentation for this Repository can be found in the [GitHub Pages](https://hard-software-au.github.io/juLinear.jl/docs/build/).
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 
 ## Contribution Guidelines
 
