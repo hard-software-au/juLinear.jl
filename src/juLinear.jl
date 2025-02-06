@@ -32,6 +32,7 @@ Parses command-line arguments using the `ArgParse` package. It defines options s
 
 # Command-Line Arguments
 - `--filename, -f`: Path to the problem file (LP or MPS format). If not provided, a default file path is used.
+- `--model, -lp`: Pass lp model directly to juLiner.
 - `--interior, -i`: Use the interior point method (currently not implemented).
 - `--no_presolve`: Skip the presolve step (default is `false`).
 - `--simplex, -s`: Use the simplex method (default).
@@ -45,9 +46,12 @@ function parse_commandline()
     @add_arg_table! s begin
         "--filename", "-f"
         help = "Path to the problem file (LP or MPS format)"
-        default = "/Users/roryyarr/Desktop/Linear Programming/lp_code/check/problems/mps_files/ex_9-7.mps"
-        arg_type = String
-        required = false
+        # default = "/Users/roryyarr/Desktop/Linear Programming/lp_code/check/problems/mps_files/ex_9-7.mps"
+        action = :store_true
+
+        "--model", "-m"
+        help = "Model lp problem"
+        action = :store_true
 
         "--interior", "-i"
         help = "Use interior point method (LP only)"
@@ -69,6 +73,7 @@ function parse_commandline()
     # Parse the command-line arguments
     return parse_args(s)
 end
+
 
 
 ###############################################################################
@@ -121,7 +126,14 @@ Handles the operations required to solve the LP problem based on the parsed comm
 handle_lp_operations(parsed_args)
 """
 function handle_lp_operations(parsed_args)
-    lp = load_lp_problem(parsed_args["filename"])
+
+    if parsed_args["model"]
+        lp = parsed_args["model"]
+    elseif parsed_args["filename"]
+        lp = load_lp_problem(parsed_args["filename"])
+    else
+        error("Please pass an LP model either directly as an LPProblem object or as its filename")
+    end
 
     if parsed_args["no_presolve"]
         println("Skipping presolve step")
@@ -168,6 +180,7 @@ The main function that orchestrates the entire LP solving process. It parses com
 julia juLinear.jl --filename "../check/problems/lp_files/ex_9-7.lp" --simplex --no_presolve --verbose
 ```
 """
+
 function main()
     parsed_args = parse_commandline()
 
@@ -175,7 +188,15 @@ function main()
     return handle_lp_operations(parsed_args)
 end
 
-# Run the main function
-main()
+# Run the main function within a try-catch block:
+try
+    main()
+catch e
+    # Print only the custom error message without a stacktrace.
+    # Note: For errors thrown with error(...), the message is stored in e.msg.
+    println(e.msg)
+    # Continue execution (do not exit the program)
+end
+
 
 end # module juLinear
