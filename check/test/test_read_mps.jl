@@ -7,7 +7,7 @@ include("test_helpers.jl")
 
 # List of MPS files to test
 const MPS_FILES = [
-    "ex4-3.mps"#, "ex_9-7.mps", "problem.mps", "simple.mps", "test.mps" #, "blend.mps"
+    "ex4-3.mps", "ex_9-7.mps", "problem.mps", "simple.mps", "test.mps" #, "blend.mps"
 ]
 
 # Define expected LPProblem instances for specific MPS files
