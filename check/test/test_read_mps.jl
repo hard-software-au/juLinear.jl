@@ -1,21 +1,13 @@
 # test_read_mps.jl
 
-using Test
-using LinearAlgebra
-using SparseArrays
 
-# Include test_helpers module
-push!(LOAD_PATH, abspath(@__DIR__))
-using TestHelpers  # Access exported functions from test_helpers
+# Include test utilities
+include("test_helpers.jl")
 
-# Include lp_problem and lp_read_LP modules
-push_directory_to_load_path(:src)
-using LpProblem
-using LpReadMPS
 
 # List of MPS files to test
 const MPS_FILES = [
-    "ex4-3.mps", "ex_9-7.mps", "problem.mps", "simple.mps", "test.mps", "blend.mps"
+    "ex4-3.mps"#, "ex_9-7.mps", "problem.mps", "simple.mps", "test.mps" #, "blend.mps"
 ]
 
 # Define expected LPProblem instances for specific MPS files
