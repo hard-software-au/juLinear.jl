@@ -4,14 +4,9 @@ using Test
 using LinearAlgebra
 using SparseArrays
 
-# Include test_helpers module
-push!(LOAD_PATH, abspath(@__DIR__))
-using TestHelpers  # Access exported functions from test_helpers
+# Include test utilities
+include("test_helpers.jl")
 
-# Include lp_problem and lp_read_LP modules
-push_directory_to_load_path(:src)
-using LpProblem
-using LpReadLP
 
 # List of LP files to test
 const LP_FILES = [
