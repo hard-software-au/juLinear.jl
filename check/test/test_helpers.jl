@@ -1,14 +1,11 @@
 # test_helpers.jl
 
-module TestHelpers
-
 using Test  # Import the Test module for @test macros
 using LinearAlgebra
 using SparseArrays
 
-# Add the source folder to the load path
-push!(LOAD_PATH, abspath(@__DIR__, "..", "..", "src"))
-using LpProblem  # Ensure lp_problem is accessible
+# include LPPoblem
+include(joinpath(@__DIR__, "..", "..", "src", "problems", "lp_problem.jl"))
 
 # Export functions
 export get_src_path, push_directory_to_load_path
@@ -365,5 +362,3 @@ function test_specific_values(lp::LPProblem, expected::LPProblem)
         @test (lp.variable_types == expected.variable_types)
     end
 end
-
-end # module test_helpers
