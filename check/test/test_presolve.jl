@@ -1,19 +1,9 @@
-# TestLpPresolve.jl
+########################################################################################################################
+########################################            test_presolve.jl            ########################################
+########################################################################################################################
 
-using Test
-using LinearAlgebra
-using SparseArrays
-
-# Include test_helpers module
-push!(LOAD_PATH, abspath(@__DIR__))
-using TestHelpers  # Access exported functions from test_helpers
-
-# Include lp_problem and other local modules
-push_directory_to_load_path(:src)
-using LpProblem
-using LpReadLP
-
-using LpPresolve # Module being tested
+# include test utilities
+include("test_helpers.jl")
 
 
 # List of LP files to test
@@ -35,6 +25,7 @@ const PRESOLVE_FUNCTIONS = [
     presolve_lp,
 ]
 
+# run tests on presolve routine
 @testset "LpPresolve Tests" begin
     for file in LP_FILES
         lp_file_path = get_problems_path(file)
