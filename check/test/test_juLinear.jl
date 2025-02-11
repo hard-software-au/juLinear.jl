@@ -1,57 +1,10 @@
-# TestjuLinear.jl
+########################################################################################################################
+########################################            test_juLinear.jl            ########################################
+########################################################################################################################
 
-using Test
-using LinearAlgebra
-using SparseArrays
-using ArgParse
+#Include test utilities
+include("test_helpers.jl")
 
-# Include test_helpers module
-push!(LOAD_PATH, abspath(@__DIR__))
-using TestHelpers  # Access exported functions from test_helpers
-
-# Include local modules
-push_directory_to_load_path(:src)
-using LpConstants
-using LpUtils
-using LpPresolve
-using LpProblem
-using LpReadLP 
-using LpReadMPS
-using LpRevisedSimplex
-using LpStandardFormConverter
-
-using juLinear
-
-
-
-
-# @testset "juLinear Tests" begin
-#     # for test in Tests
-    
-# end
-
-
-# Helper function to capture stdout
-function capture_output(f::Function)
-    io = IOBuffer()
-    redirect_stdout(io) do
-        f()
-    end
-    return String(take!(io))
-end
-
-# Helper function to capture stdout
-function capture_output(f::Function)
-    io = IOBuffer()
-    saved_stdout = stdout
-    try
-        stdout = io
-        f()
-    finally
-        stdout = saved_stdout
-    end
-    return String(take!(io))
-end
 
 # Assuming juLinear is in the current namespace after inclusion
 @testset "juLinear Tests" begin
