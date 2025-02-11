@@ -23,8 +23,8 @@ This repository contains a collection of linear programming (LP) prototypes aime
     - [Adding New Modules](#adding-new-modules)
     - [Running Tests](#running-tests)
 5. [Contribution Guidelines](#contribution-guidelines)
-6. [Documentation](#documentation)
-7. [License](#license)
+<!-- 6. [Documentation](#documentation) -->
+6. [License](#license)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -137,21 +137,18 @@ First, navigate to the `src` folder in the terminal and run the following comman
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+
 ## Adding to the Repository
 
-### Adding New Modules
+<!-- ### Adding New Methods -->
 
-To add a new Julia module, place your `.jl` file in the `src` directory and update the `LOAD_PATH` in your scripts or notebooks to include the new module. For example:
-```julia
-    push!(LOAD_PATH, realpath("../code"))
-    using new_module_name
-```
+
 
 ### Running Tests
 
 Make sure to add test cases in the `check/test` directory for any new functionality you introduce. You can run the tests using:
 ```bash
-    julia check/test/RunAllTests.jl
+    julia check/test/run_all_tests.jl
 ```
 For more information see this [README](check/test/README.md).
 
@@ -162,6 +159,7 @@ For more information see this [README](check/test/README.md).
 The documentation for this Repository can be found in the [GitHub Pages](https://hard-software-au.github.io/juLinear.jl/docs/build/).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
+
 
 ## Contribution Guidelines
 
