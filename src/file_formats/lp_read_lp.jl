@@ -1,12 +1,8 @@
-# module LpReadLP
+########################################################################################################################
+########################################             lp_read_mps.lp             ########################################
+########################################################################################################################
 
-# using SparseArrays
-# using LinearAlgebra
-# using DataStructures  # For OrderedDict if needed
-
-# using LpProblem
-
-# export read_lp, write_lp
+include("lp_file_utils.jl")
 
 """
     read_lp(filename::String) -> LPProblem
