@@ -1,21 +1,29 @@
-# test_helpers.jl
+########################################################################################################################
+########################################             test_helpers.jl            ########################################
+########################################################################################################################
 
-using Test  # Import the Test module for @test macros
+# Import julia libraries
+using Test  
 using LinearAlgebra
 using SparseArrays
+using OrderedCollections
+using ArgParse
 
-# include LPPoblem
-include(joinpath(@__DIR__, "..", "..", "src", "problems", "lp_problem.jl"))
+# include juLinear functionality code blocks
+include(joinpath(@__DIR__, "..", "..", "src", "problems", "lp_problem_structs.jl"))
+include(joinpath(@__DIR__, "..", "..", "src", "file_formats", "lp_file_formater.jl"))
 
-# Export functions
-export get_src_path, push_directory_to_load_path
-export get_problems_path, get_lp_problem
-export test_general_structure, test_specific_values
+include(joinpath(@__DIR__, "..", "..", "src", "preprocess", "lp_presolve.jl"))
+include(joinpath(@__DIR__, "..", "..", "src", "preprocess", "lp_standard_form_converter.jl"))
+
+include(joinpath(@__DIR__, "..", "..", "src", "solvers", "lp_revised_simplex.jl"))
+
+include(joinpath(@__DIR__, "..", "..", "src", "juLinear.jl"))
 
 
-################################################################################
+##########################################################################################
 ## Base Directory and Structure
-################################################################################
+##########################################################################################
 
 
 """
@@ -91,9 +99,11 @@ const PATHS = Dict(
     :res => abspath(joinpath(BASE_DIR, "res")),
     :tools => abspath(joinpath(BASE_DIR, "tools")),
 )
-################################################################################
+
+
+##########################################################################################
 ## Directory Functions
-################################################################################
+##########################################################################################
 
 """
     get_directory(level::Symbol)
@@ -188,9 +198,9 @@ function get_problems_path(filename::String; dirs=["lp_files", "mps_files"])
 end
 
 
-################################################################################
+##########################################################################################
 ## Reading problems
-################################################################################
+##########################################################################################
 
 """
     get_lp_problem(filename::String; dirs=["lp_files", "mps_files"])
@@ -229,9 +239,9 @@ function get_lp_problem(filename::String; dirs=["lp_files", "mps_files"])
 end
 
 
-################################################################################
+##########################################################################################
 ## LPProblem Structure Tests
-################################################################################
+##########################################################################################
 
 """
     test_general_structure(lp::LPProblem)
@@ -362,3 +372,30 @@ function test_specific_values(lp::LPProblem, expected::LPProblem)
         @test (lp.variable_types == expected.variable_types)
     end
 end
+
+
+##########################################################################################
+## ArgParse utilities
+##########################################################################################
+
+# Helper function to capture stdout
+function capture_output(f::Function)
+    io = IOBuffer()
+    redirect_stdout(io) do
+        f()
+    end
+    return String(take!(io))
+end
+
+# # Helper function to capture stdout
+# function capture_output(f::Function)
+#     io = IOBuffer()
+#     saved_stdout = stdout
+#     try
+#         stdout = io
+#         f()
+#     finally
+#         stdout = saved_stdout
+#     end
+#     return String(take!(io))
+# end
