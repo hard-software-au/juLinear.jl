@@ -23,12 +23,12 @@ raising appropriate errors.
 - The internal representation (`LPProblem` structure) matches expected outcomes for given input files.
 
 ## Test Files
-- `RunAllTests.jl`: This file runs all the tests.
-- `TestFramework`: Contains the main framework for running the unit tests and creating new test files.
-- `TestHelpers`: Provides utility functions and helpers used across multiple test cases.
-- `TestReadMPS.jl`: Contains unit tests for the MPS file reader.
-- `TestReadLP.jl`: Contains unit tests for the LP file reader.
-- `TestStandardFormConverter.jl" :  Contains unit tests for the standard form converter.
+- `TestFramework.jl`: Contains the main framework module for running the unit tests and creating new test files.
+- `run_all_tests.jl`: This file runs all the tests.
+- `test_helpers`: Provides utility functions and helpers used across multiple test cases.
+- `test_read_mps.jl`: Contains unit tests for the MPS file reader.
+- `test_read_lp.jl`: Contains unit tests for the LP file reader.
+- `test_standard_form_converter.jl" :  Contains unit tests for the standard form converter.
 
 
 ## Running the Unit Tests
@@ -36,7 +36,7 @@ raising appropriate errors.
 First, navigate to the test directory:
 
 ```bash
-cd /path/to/your/project/check/test
+  cd /check/test
 ```
 
 ### Running All Unit Tests
@@ -44,14 +44,16 @@ cd /path/to/your/project/check/test
 To run all the unit tests, use the following command:
 
 ```bash
-julia /path/to/your/project/check/test
+  julia run_all_tests.jl
 ```
 
 ### Running Individual Unit Tests
 
 1. First open the julia REPL inside the test directory:
 ```bash
-julia
+  push!(LOAD_PATH, ".")
+  using TestFramework
+  run_tests(["method_A", "method_B", ... ])
 ```
 
 2. Next load the path and import the TestFramework module:
